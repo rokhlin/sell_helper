@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "sell_helper",
+			"path": "."
+		},
+		{
+			"name": "SystemDevelopmentManagement",
+			"path": "../SystemDevelopmentManagement"
+		}
+	],
+	"settings": {}
+}
