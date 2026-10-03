@@ -2,6 +2,9 @@ node_modules/
 dist/
 coverage/
 .env
+data/config/.env
+*.env
+!*.env.example
 .DS_Store
 *.log
 data/*.db

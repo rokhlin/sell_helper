@@ -136,11 +136,12 @@ erDiagram
 
 ## 6. Containerization & Storage Strategy
 
-- **Base Image**: `node:22-alpine` or `node:20-alpine` (lightweight, secure).
-- **Persistent Data Volume**:
+- **Base Image**: `node:22-alpine` (lightweight, secure).
+- **Persistent Data & Configuration Volume**:
+  - Configuration directory: `/app/data/config/.env` contains runtime environment variables, bot credentials, and access whitelist.
   - SQLite database file located at `/app/data/sell_helper.db`.
   - Media storage located at `/app/data/uploads/`.
-- **Docker Compose Setup**: Single-service orchestration with host volume mounts for data persistence across restarts.
+- **Docker Compose Setup**: Single-service orchestration with host `./data` volume mounts preserving configuration, database, and media across container updates.
 
 ---
 

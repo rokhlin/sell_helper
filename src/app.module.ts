@@ -11,6 +11,7 @@ import { AppService } from './app.service';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      envFilePath: ['data/config/.env', '.env'],
     }),
     DatabaseModule,
     TelegramModule,

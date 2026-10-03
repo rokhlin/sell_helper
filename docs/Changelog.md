@@ -17,3 +17,4 @@ All notable changes to this project will be documented in this file.
   - Implemented `TelegramAuthGuard` enforcing strict access control whitelist from `AUTHORIZED_USERS` environment variable.
   - Configured responsive welcome and help command handlers (`/start`, `/help`).
   - Added unit test suite covering configuration, guards, services, and updates with 98.75% code coverage.
+  - Relocated runtime environment configuration to `data/config/.env` with `data/config/.env.example` template, integrated into `ConfigModule` and `docker-compose.yml`.
