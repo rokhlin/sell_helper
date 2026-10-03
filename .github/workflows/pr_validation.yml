@@ -1,7 +1,42 @@
 name: PR Validation
-on: [pull_request]
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
+
     steps:
-      - checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "file:./data/sell_helper.db"
+
+      - name: Lint Code
+        run: npm run lint
+
+      - name: Run Unit Tests & Coverage
+        run: npm run test:cov
+        env:
+          DATABASE_URL: "file:./data/sell_helper.db"
+          TELEGRAM_BOT_TOKEN: "0000000000:MOCK_TOKEN"
+          AUTHORIZED_USERS: "123456789,987654321"
+
+      - name: Build Application
+        run: npm run build

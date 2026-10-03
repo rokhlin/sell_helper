@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id // Telegram User ID as string
+  username     String?
+  firstName    String?
+  lastName     String?
+  isAuthorized Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  saleRequests SaleRequest[]
+
+  @@map("users")
+}
+
+model SaleRequest {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemTitle         String?
+  rawDescription    String?
+  estimatedPriceMin Float?
+  estimatedPriceMax Float?
+  currency          String         @default("USD")
+  status            String         @default("DRAFT") // DRAFT, ANALYZING, COMPLETED, ARCHIVED
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  media             RequestMedia[]
+  generatedAds      GeneratedAd[]
+
+  @@map("sale_requests")
+}
+
+model RequestMedia {
+  id             String      @id @default(cuid())
+  saleRequestId  String
+  saleRequest    SaleRequest @relation(fields: [saleRequestId], references: [id], onDelete: Cascade)
+  fileType       String // IMAGE, AUDIO, DOCUMENT
+  localPath      String?
+  telegramFileId String?
+  createdAt      DateTime    @default(now())
+
+  @@map("request_media")
+}
+
+model GeneratedAd {
+  id               String      @id @default(cuid())
+  saleRequestId    String
+  saleRequest      SaleRequest @relation(fields: [saleRequestId], references: [id], onDelete: Cascade)
+  targetPlatform   String // AVITO, KUFAR, FACEBOOK, TELEGRAM
+  adTitle          String
+  adContent        String
+  recommendedPrice Float?
+  createdAt        DateTime    @default(now())
+
+  @@map("generated_ads")
+}

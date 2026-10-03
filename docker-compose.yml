@@ -1,0 +1,15 @@
+services:
+  sell_helper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sell_helper
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/sell_helper.db
