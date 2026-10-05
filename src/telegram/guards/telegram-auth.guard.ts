@@ -4,21 +4,20 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { TelegrafExecutionContext } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
-import { ACCESS_DENIED_MESSAGE } from '../telegram.constants';
+import { TelegramService } from '../telegram.service';
+import {
+  PENDING_ACCESS_MESSAGE,
+  ALREADY_PENDING_MESSAGE,
+  REJECTED_ACCESS_MESSAGE,
+} from '../telegram.constants';
 
 @Injectable()
 export class TelegramAuthGuard implements CanActivate {
   private readonly logger = new Logger(TelegramAuthGuard.name);
-  private readonly authorizedUsers: string[];
 
-  constructor(private readonly configService: ConfigService) {
-    const rawUsers =
-      this.configService.get<string[]>('telegram.authorizedUsers') || [];
-    this.authorizedUsers = rawUsers.map((id) => String(id).trim());
-  }
+  constructor(private readonly telegramService: TelegramService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const telegrafContext = TelegrafExecutionContext.create(context);
@@ -26,22 +25,103 @@ export class TelegramAuthGuard implements CanActivate {
 
     const userId = ctx.from?.id != null ? String(ctx.from.id) : null;
 
-    if (!userId || !this.authorizedUsers.includes(userId)) {
+    if (!userId) {
+      this.logger.warn('Access attempt with missing Telegram User ID.');
+      return false;
+    }
+
+    // 1. Handle Callback Queries (e.g., inline buttons from admin)
+    if (ctx.callbackQuery) {
+      const user = await this.telegramService.getUser(userId);
+      if (user?.role === 'ADMIN') {
+        return true;
+      }
       this.logger.warn(
-        `Unauthorized access attempt from Telegram User ID: ${userId || 'unknown'}`,
+        `Non-admin user ${userId} attempted callback action: ${JSON.stringify(
+          ctx.callbackQuery,
+        )}`,
       );
-      if (typeof ctx.reply === 'function') {
+      if (typeof ctx.answerCbQuery === 'function') {
         try {
-          await ctx.reply(ACCESS_DENIED_MESSAGE);
+          await ctx.answerCbQuery(
+            '⛔ Действие доступно только администратору.',
+            { show_alert: true },
+          );
         } catch (error) {
           this.logger.error(
-            `Failed to send access denied reply: ${(error as Error).message}`,
+            `Failed to answer callback query: ${(error as Error).message}`,
           );
         }
       }
       return false;
     }
 
-    return true;
+    // 2. First-User Admin Bootstrapping Check
+    const admin = await this.telegramService.findAdmin();
+    if (!admin) {
+      this.logger.log(
+        `No admin registered yet. User ${userId} will be bootstrapped as the first ADMIN.`,
+      );
+      await this.telegramService.syncUser(ctx);
+      return true;
+    }
+
+    // 3. User Authorization Check
+    const user = await this.telegramService.getUser(userId);
+
+    if (user?.isAuthorized) {
+      return true;
+    }
+
+    // 4. Handle Rejected State
+    if (user?.status === 'REJECTED') {
+      this.logger.warn(`Rejected user ${userId} attempted access to bot.`);
+      if (typeof ctx.reply === 'function') {
+        try {
+          await ctx.reply(REJECTED_ACCESS_MESSAGE, { parse_mode: 'Markdown' });
+        } catch (error) {
+          this.logger.error(
+            `Failed to send rejected message: ${(error as Error).message}`,
+          );
+        }
+      }
+      return false;
+    }
+
+    // 5. Handle Already Pending State
+    if (user?.status === 'PENDING') {
+      this.logger.log(
+        `Pending user ${userId} attempted access while awaiting approval.`,
+      );
+      if (typeof ctx.reply === 'function') {
+        try {
+          await ctx.reply(ALREADY_PENDING_MESSAGE, { parse_mode: 'Markdown' });
+        } catch (error) {
+          this.logger.error(
+            `Failed to send already pending message: ${(error as Error).message}`,
+          );
+        }
+      }
+      return false;
+    }
+
+    // 6. First-time unknown user: Record as PENDING, inform user, and notify Administrator
+    this.logger.log(
+      `New user ${userId} requesting access. Registering as PENDING and notifying admin.`,
+    );
+    await this.telegramService.syncUser(ctx);
+
+    if (typeof ctx.reply === 'function') {
+      try {
+        await ctx.reply(PENDING_ACCESS_MESSAGE, { parse_mode: 'Markdown' });
+      } catch (error) {
+        this.logger.error(
+          `Failed to send pending notice: ${(error as Error).message}`,
+        );
+      }
+    }
+
+    await this.telegramService.notifyAdminNewRequest(ctx, userId);
+    return false;
   }
 }
