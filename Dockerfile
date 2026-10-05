@@ -20,6 +20,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# OCI labels – required to link the package to the repository on GHCR
+# (see https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#labelling-container-images)
+LABEL org.opencontainers.image.source="https://github.com/rokhlin/sell_helper"
+LABEL org.opencontainers.image.description="Sell Helper – Telegram bot service for AI-powered ad generation"
+LABEL org.opencontainers.image.licenses="UNLICENSED"
+
 COPY package*.json ./
 RUN npm ci --only=production
 
