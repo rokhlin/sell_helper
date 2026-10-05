@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
   - Automatic applicant notification upon approval or rejection.
   - Added `role` and `status` fields to `User` Prisma model and synced SQLite database.
   - Updated `TelegramAuthGuard`, `TelegramService`, and `TelegramUpdate` action listeners with 96.35% code coverage.
+- **GHCR Container Publishing**:
+  - Updated `Release & Container Build` GitHub Actions workflow to authenticate to GitHub Container Registry and push `ghcr.io/rokhlin/sell_helper` images on every version tag.
+  - Workflow now runs unit tests before the build/push step (gate on green tests).
+  - Published image tags: exact version, `latest`, and `MAJOR.MINOR` via `docker/metadata-action`; GHA build cache enabled.
+  - Updated `docker-compose.yml` to pull from `ghcr.io/rokhlin/sell_helper:latest` instead of performing a local build — deployment hosts no longer require Node.js or source code.
+
 
 ## [0.1.0] - 2026-10-03
 ### Added

@@ -1,8 +1,6 @@
 services:
   sell_helper:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/rokhlin/sell_helper:latest
     container_name: sell_helper
     restart: unless-stopped
     ports:
