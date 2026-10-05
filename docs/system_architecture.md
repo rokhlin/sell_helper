@@ -57,29 +57,54 @@ The backend is decomposed into decoupled, cohesive NestJS modules:
 ```mermaid
 sequenceDiagram
     autonumber
-    participant U as Telegram User
+    actor U as Telegram User
+    actor Admin as First User (Administrator)
     participant TG as Telegram API
     participant Bot as Telegraf Bot Engine
     participant Guard as TelegramAuthGuard
-    participant Handler as Bot Command Handler
+    participant Handler as Bot Command / Action Handler
+    participant DB as SQLite (Prisma)
 
     U->>TG: Send Message / Command (e.g. /start)
     TG->>Bot: Incoming Update
     Bot->>Guard: Intercept Update (Extract ctx.from.id)
-    alt User ID in AUTHORIZED_USERS Whitelist
-        Guard-->>Bot: Allow Next Middleware
+    alt No Admin Exists (First User)
+        Guard->>DB: Upsert User (role: ADMIN, isAuthorized: true, status: APPROVED)
+        Guard-->>Bot: Allow Execution
+        Bot->>Handler: onStart()
+        Handler-->>Admin: 👑 "Registered as Administrator"
+    else User Already Authorized
+        Guard->>DB: Query User(userId) -> isAuthorized: true
+        Guard-->>Bot: Allow Execution
         Bot->>Handler: Process Command / State Transition
-        Handler-->>U: Authorized Response & Menu
-    else User ID NOT Authorized
-        Guard-->>Bot: Deny Execution
-        Bot-->>U: "⛔ Access Denied. You are not authorized to use this bot."
+        Handler-->>U: Authorized Menu / Response
+    else User Pending / New User
+        Guard->>DB: Record User(status: PENDING, isAuthorized: false)
+        Guard-->>U: ⏳ "Request sent to administrator for approval"
+        Guard->>Admin: 🔔 "New Request" + [Подтвердить] [Удалить]
+    else Admin Clicks [Подтвердить]
+        Admin->>Bot: Callback Query approve:<userId>
+        Guard-->>Bot: Allow (Caller is ADMIN)
+        Bot->>Handler: onApproveUser()
+        Handler->>DB: Update User(isAuthorized: true, status: APPROVED)
+        Handler-->>Admin: ✅ "User Approved"
+        Handler-->>U: 🎉 "Access Approved! Welcome to Sell Helper."
+    else Admin Clicks [Удалить]
+        Admin->>Bot: Callback Query reject:<userId>
+        Guard-->>Bot: Allow (Caller is ADMIN)
+        Bot->>Handler: onRejectUser()
+        Handler->>DB: Update User(isAuthorized: false, status: REJECTED)
+        Handler-->>Admin: ❌ "User Rejected"
     end
 ```
 
-### Whitelist Authorization Protocol
-- Environment variable `AUTHORIZED_USERS` holds a comma-separated list of numeric Telegram User IDs (e.g., `123456789,987654321`).
-- The `TelegramAuthGuard` intercepts all incoming updates (messages, callback queries, inline queries).
-- If the sender's Telegram ID is not within the whitelist, the bot replies with a standard rejection message and terminates the pipeline immediately.
+### Dynamic First-Admin & Approval Flow Protocol
+- The primary access control mechanism is database-driven via the `users` table.
+- **First-User Bootstrapping**: The first user to interact with the bot when no administrator exists is automatically granted the `ADMIN` role and immediate authorization (`isAuthorized = true`).
+- **Access Requests**: Any subsequent unregistered or unauthorized user is marked with `status = 'PENDING'` (`isAuthorized = false`), receives a waiting notification, and an interactive message is forwarded to the administrator with inline buttons:
+  - **«Подтвердить»** (`approve:<userId>`): Promotes user status to `APPROVED`, sets `isAuthorized = true`, and notifies the applicant.
+  - **«Удалить»** (`reject:<userId>`): Sets status to `REJECTED`, keeping the system unavailable for the user.
+- **Guard Enforcement**: `TelegramAuthGuard` verifies user status dynamically against the SQLite database via Prisma, permitting callback queries strictly for administrators and blocking non-authorized messages.
 
 ---
 
@@ -95,6 +120,9 @@ erDiagram
         string id PK "Telegram User ID"
         string username "Telegram Username"
         string firstName "Telegram First Name"
+        string role "ADMIN or USER"
+        string status "PENDING, APPROVED, REJECTED"
+        boolean isAuthorized "Access Flag"
         datetime createdAt "Creation Timestamp"
         datetime updatedAt "Update Timestamp"
     }

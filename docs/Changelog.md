@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- **Dynamic First-Admin & Telegram Approval Workflow (CR-001)**:
+  - First user contacting the bot automatically bootstraps as the system Administrator (`ADMIN` role, immediate authorization).
+  - Subsequent unauthorized users are registered as `PENDING` and trigger real-time approval notifications to the administrator.
+  - Interactive inline keyboard with «Подтвердить» (`approve:<userId>`) and «Удалить» (`reject:<userId>`) action buttons for instant access delegation.
+  - Automatic applicant notification upon approval or rejection.
+  - Added `role` and `status` fields to `User` Prisma model and synced SQLite database.
+  - Updated `TelegramAuthGuard`, `TelegramService`, and `TelegramUpdate` action listeners with 96.35% code coverage.
 
 ## [0.1.0] - 2026-10-03
 ### Added

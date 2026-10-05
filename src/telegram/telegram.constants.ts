@@ -16,3 +16,28 @@ export const HELP_MESSAGE =
   '• /new - Start a new item evaluation\n' +
   '• /status - Check pending listing drafts\n\n' +
   '💡 *Tip:* You can send photos or voice messages directly at any time.';
+
+export const ADMIN_WELCOME_MESSAGE =
+  '👑 *Вы зарегистрированы как администратор бота!*\n\n' +
+  'Вам будут приходить запросы на доступ от новых пользователей с кнопками «Подтвердить» и «Удалить».\n\n' +
+  WELCOME_MESSAGE;
+
+export const PENDING_ACCESS_MESSAGE =
+  '⏳ *Запрос отправлен администратору*\n\n' +
+  'Ваша заявка на использование бота отправлена администратору. Как только доступ будет подтвержден, вы получите уведомление.';
+
+export const ALREADY_PENDING_MESSAGE =
+  '⏳ *Заявка на рассмотрении*\n\n' +
+  'Ваш запрос на доступ уже находится на рассмотрении у администратора. Пожалуйста, ожидайте подтверждения.';
+
+export const REJECTED_ACCESS_MESSAGE =
+  '⛔ *Доступ отклонен*\n\n' +
+  'Администратор отклонил ваш запрос на доступ к боту.';
+
+export const ACCESS_APPROVED_NOTIFICATION =
+  '🎉 *Доступ подтвержден!*\n\n' +
+  'Администратор одобрил вашу заявку. Теперь вам доступны все функции бота.\n\n' +
+  WELCOME_MESSAGE;
+
+export const BUTTON_CONFIRM_TEXT = 'Подтвердить';
+export const BUTTON_DELETE_TEXT = 'Удалить';
