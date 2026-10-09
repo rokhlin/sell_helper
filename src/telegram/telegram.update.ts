@@ -424,29 +424,115 @@ export class TelegramUpdate {
     );
 
     const inlineKeyboard = Markup.inlineKeyboard([actionButtons]);
-    const messageText = lines.join('\n');
+    const chunks = this.chunkLines(lines, 3800);
 
+    for (let i = 0; i < chunks.length; i++) {
+      const isLast = i === chunks.length - 1;
+      const extra = isLast ? inlineKeyboard : undefined;
+      await this.sendChunk(ctx, chunks[i], extra);
+    }
+  }
+
+  private async sendChunk(
+    ctx: Context,
+    text: string,
+    extra?: any,
+  ): Promise<void> {
     try {
-      await ctx.reply(messageText, {
-        parse_mode: 'HTML',
-        ...inlineKeyboard,
-      });
+      if (extra) {
+        await ctx.reply(text, {
+          parse_mode: 'HTML',
+          ...extra,
+        });
+      } else {
+        await ctx.reply(text, {
+          parse_mode: 'HTML',
+        });
+      }
     } catch (e) {
       this.logger.warn(
         `Failed to send HTML formatted message, falling back to plain text: ${(e as Error).message}`,
       );
+      const plainText = text.replace(/<[^>]*>/g, '');
       try {
-        await ctx.reply(
-          lines.map((l) => l.replace(/<[^>]*>/g, '')).join('\n'),
-          inlineKeyboard,
-        );
+        if (extra) {
+          await ctx.reply(plainText, extra);
+        } else {
+          await ctx.reply(plainText);
+        }
       } catch (innerError) {
         this.logger.error(
           `Failed to send message with keyboard: ${(innerError as Error).message}. Sending plain text without keyboard.`,
         );
-        await ctx.reply(lines.map((l) => l.replace(/<[^>]*>/g, '')).join('\n'));
+        try {
+          await ctx.reply(plainText);
+        } catch (finalError) {
+          this.logger.error(
+            `Failed to send plain text message: ${(finalError as Error).message}`,
+          );
+        }
       }
     }
+  }
+
+  private chunkLines(lines: string[], maxLength = 3800): string[] {
+    const chunks: string[] = [];
+    let currentChunk: string[] = [];
+    let currentLength = 0;
+
+    for (const rawLine of lines) {
+      const subLines: string[] = [];
+      if (rawLine.length > maxLength) {
+        let remaining = rawLine;
+        while (remaining.length > maxLength) {
+          let splitIdx = remaining.lastIndexOf('\n', maxLength);
+          if (splitIdx === -1 || splitIdx < maxLength / 2) {
+            splitIdx = remaining.lastIndexOf(' ', maxLength);
+          }
+          if (splitIdx === -1 || splitIdx < maxLength / 2) {
+            splitIdx = maxLength;
+          }
+
+          // Avoid slicing across an HTML entity like &quot; or &#39;
+          const ampIndex = remaining.lastIndexOf('&', splitIdx);
+          const semiIndex = remaining.lastIndexOf(';', splitIdx);
+          if (
+            ampIndex !== -1 &&
+            ampIndex > semiIndex &&
+            splitIdx - ampIndex < 10
+          ) {
+            splitIdx = ampIndex;
+          }
+
+          subLines.push(remaining.slice(0, splitIdx));
+          remaining = remaining.slice(splitIdx).trimStart();
+        }
+        if (remaining.length > 0) {
+          subLines.push(remaining);
+        }
+      } else {
+        subLines.push(rawLine);
+      }
+
+      for (const line of subLines) {
+        const addedLength =
+          currentChunk.length === 0 ? line.length : line.length + 1;
+        if (currentLength + addedLength > maxLength && currentChunk.length > 0) {
+          chunks.push(currentChunk.join('\n'));
+          currentChunk = [line];
+          currentLength = line.length;
+        } else {
+          currentChunk.push(line);
+          currentLength += addedLength;
+        }
+      }
+    }
+
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk.join('\n'));
+    }
+
+    return chunks.length > 0 ? chunks : [''];
   }
 
   private isValidTelegramButtonUrl(urlStr: string): boolean {

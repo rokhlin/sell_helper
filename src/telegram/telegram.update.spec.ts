@@ -515,5 +515,58 @@ describe('TelegramUpdate', () => {
       // Third reply call should be plain text without any keyboard argument
       expect(mockCtx.reply).toHaveBeenCalledTimes(3);
     });
+
+    it('should split long analysis message exceeding 4096 characters into multiple chunks', async () => {
+      const longAnalysis: AiAnalysisResult = {
+        ...mockAnalysisResult,
+        ads: [
+          {
+            platform: 'YAD2',
+            language: 'HE',
+            title: 'מודעה ארוכה מאוד',
+            content: 'א'.repeat(2500),
+            recommendedPrice: 500,
+          },
+          {
+            platform: 'FACEBOOK',
+            language: 'RU',
+            title: 'Очень длинное описание товара на Facebook',
+            content: 'Б'.repeat(2500),
+            recommendedPrice: 500,
+          },
+        ],
+      };
+
+      const mockCtx = {
+        from: { id: 123456789 },
+        message: { text: 'Очень длинный товар' },
+        sendChatAction: jest.fn().mockResolvedValue(true),
+        reply: jest.fn().mockResolvedValue(true),
+      } as any;
+
+      mockAdsService.createSaleRequest.mockResolvedValue({ id: 'req-long' });
+      mockAiService.analyzeItem.mockResolvedValue(longAnalysis);
+
+      await update.onText(mockCtx);
+
+      // Should have been called at least twice
+      expect(mockCtx.reply.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+      // Verify every chunk is within Telegram limit (4096 chars)
+      for (const call of mockCtx.reply.mock.calls) {
+        const text = call[0] as string;
+        expect(text.length).toBeLessThanOrEqual(3800);
+      }
+
+      // First chunk should NOT have inline keyboard attached
+      const firstCallExtra = mockCtx.reply.mock.calls[0][1];
+      expect(firstCallExtra?.reply_markup).toBeUndefined();
+
+      // Last chunk should have inline keyboard attached
+      const lastCallIndex = mockCtx.reply.mock.calls.length - 1;
+      const lastCallExtra = mockCtx.reply.mock.calls[lastCallIndex][1];
+      expect(lastCallExtra?.reply_markup).toBeDefined();
+    });
   });
 });
+
