@@ -60,6 +60,22 @@ describe('TelegramUpdate', () => {
         recommendedPrice: 350,
       },
     ],
+    facebookChannels: [
+      {
+        name: 'Secret Tel Aviv',
+        url: 'https://www.facebook.com/groups/secrettelaviv/',
+        language: 'EN',
+        type: 'CITY_COMMUNITY',
+        description: 'Expat community',
+      },
+      {
+        name: 'Барахолка Израиль',
+        url: 'https://www.facebook.com/groups/baraholka.israel/',
+        language: 'RU',
+        type: 'GENERAL_RESALE',
+        description: 'Всеизраильская группа',
+      },
+    ],
   };
 
   const mockAiService = {
@@ -259,6 +275,16 @@ describe('TelegramUpdate', () => {
       );
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Trek Marlin 5'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Топ-5 каналов и групп Facebook для размещения',
+        ),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Secret Tel Aviv'),
         expect.objectContaining({ parse_mode: 'HTML' }),
       );
     });

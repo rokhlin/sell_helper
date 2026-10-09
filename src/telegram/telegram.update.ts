@@ -92,8 +92,11 @@ export class TelegramUpdate {
   async onWebViewAction(@Ctx() ctx: Context) {
     const match = (ctx as unknown as { match: RegExpMatchArray }).match;
     const requestId = match?.[1];
-    const webBaseUrl =
-      this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
+    const rawWebBaseUrl = this.configService.get<string>('webBaseUrl');
+    const webBaseUrl = (rawWebBaseUrl || 'http://localhost:3000').replace(
+      /\/+$/,
+      '',
+    );
     const webViewUrl = `${webBaseUrl}/ads/${requestId}`;
     const isPublicWebUrl = this.isValidTelegramButtonUrl(webViewUrl);
 
@@ -380,8 +383,28 @@ export class TelegramUpdate {
       }
     }
 
-    const webBaseUrl =
-      this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
+    // Recommended Facebook Channels & Communities
+    if (analysis.facebookChannels && analysis.facebookChannels.length > 0) {
+      lines.push('');
+      lines.push(`📢 <b>Топ-5 каналов и групп Facebook для размещения:</b>`);
+      const topChannels = analysis.facebookChannels.slice(0, 5);
+      topChannels.forEach((ch, idx) => {
+        const langBadge = ch.language ? ` [${ch.language}]` : '';
+        const escapedName = this.escapeHtml(ch.name);
+        const desc = ch.description
+          ? ` — <i>${this.escapeHtml(ch.description)}</i>`
+          : '';
+        lines.push(
+          `${idx + 1}. <a href="${ch.url}">${escapedName}</a>${langBadge}${desc}`,
+        );
+      });
+    }
+
+    const rawWebBaseUrl = this.configService.get<string>('webBaseUrl');
+    const webBaseUrl = (rawWebBaseUrl || 'http://localhost:3000').replace(
+      /\/+$/,
+      '',
+    );
     const webViewUrl = `${webBaseUrl}/ads/${saleRequestId}`;
     const isPublicWebUrl = this.isValidTelegramButtonUrl(webViewUrl);
 

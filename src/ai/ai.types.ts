@@ -17,6 +17,17 @@ export interface PriceEstimation {
   reasoning: string;
 }
 
+export type FacebookCommunityType =
+  'MARKETPLACE' | 'CITY_COMMUNITY' | 'GENERAL_RESALE' | 'CATEGORY_NICHE';
+
+export interface FacebookChannelRecommendation {
+  name: string;
+  url: string;
+  language: AdLanguage;
+  type: FacebookCommunityType;
+  description: string;
+}
+
 export interface AiAnalysisResult {
   itemTitle: string;
   category: string;
@@ -31,6 +42,7 @@ export interface AiAnalysisResult {
   priceEstimation: PriceEstimation;
   recommendedPlatforms: TargetPlatform[];
   ads: PlatformAd[];
+  facebookChannels?: FacebookChannelRecommendation[];
 }
 
 export interface MediaInput {

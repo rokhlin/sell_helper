@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { AiAnalysisResult } from '../ai/ai.types';
+import {
+  AiAnalysisResult,
+  FacebookChannelRecommendation,
+} from '../ai/ai.types';
 
 @Injectable()
 export class AdsService {
@@ -41,6 +44,9 @@ export class AdsService {
         estimatedPriceMin: analysis.priceEstimation.min,
         estimatedPriceMax: analysis.priceEstimation.max,
         currency: analysis.priceEstimation.currency || 'ILS',
+        recommendedChannels: analysis.facebookChannels
+          ? JSON.stringify(analysis.facebookChannels)
+          : null,
         status: analysis.isComplete ? 'COMPLETED' : 'DRAFT',
       },
     });
@@ -85,17 +91,18 @@ export class AdsService {
   }
 
   async getSaleRequestWithDetails(saleRequestId: string) {
-    return this.prisma.saleRequest.findUnique({
+    const request = await this.prisma.saleRequest.findUnique({
       where: { id: saleRequestId },
       include: {
         media: true,
         generatedAds: true,
       },
     });
+    return this.formatSaleRequestWithChannels(request);
   }
 
   async getLatestSaleRequestForUser(userId: string) {
-    return this.prisma.saleRequest.findFirst({
+    const request = await this.prisma.saleRequest.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -103,5 +110,24 @@ export class AdsService {
         generatedAds: true,
       },
     });
+    return this.formatSaleRequestWithChannels(request);
+  }
+
+  private formatSaleRequestWithChannels(request: any) {
+    if (!request) return null;
+    let facebookChannels: FacebookChannelRecommendation[] = [];
+    if (request.recommendedChannels) {
+      try {
+        facebookChannels = JSON.parse(request.recommendedChannels);
+      } catch (e) {
+        this.logger.warn(
+          `Failed to parse recommendedChannels JSON for request ${request.id}: ${(e as Error).message}`,
+        );
+      }
+    }
+    return {
+      ...request,
+      facebookChannels,
+    };
   }
 }

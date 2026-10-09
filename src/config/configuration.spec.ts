@@ -45,4 +45,10 @@ describe('Configuration', () => {
       '555666777',
     ]);
   });
+
+  it('should trim and strip trailing slashes from WEB_BASE_URL', () => {
+    process.env.WEB_BASE_URL = '  http://192.168.8.213:3021///  ';
+    const config = configuration();
+    expect(config.webBaseUrl).toBe('http://192.168.8.213:3021');
+  });
 });

@@ -14,6 +14,13 @@ All notable changes to this project will be documented in this file.
   - Exposed `WEB_BASE_URL` in `docker-compose.yml`, `.env.example`, and `data/config/.env.example`.
 
 ### Added
+- **Change Request CR-003: Facebook Channels & Communities Discovery**:
+  - Implemented hybrid discovery of Israeli Facebook channels and resale groups combining a curated catalog (`CURATED_FACEBOOK_COMMUNITIES`) and dynamic Gemini matching with direct Facebook group search query synthesis.
+  - Added `FacebookChannelRecommendation` and `FacebookCommunityType` to domain types (`src/ai/ai.types.ts`).
+  - Added `recommendedChannels String?` (JSON serialized) to `SaleRequest` in Prisma schema and database.
+  - Formatted and rendered Top-5 recommended Facebook channels with clickable direct links, language badges (`[RU]`, `[HE]`, `[EN]`), and descriptions in the Telegram bot output.
+  - Enhanced SSR Web View (`views/ad-preview.ejs`) with an interactive channels section featuring responsive community cards, type and language tags, direct "Открыть в FB" links, and 1-click clipboard copy of adapted Facebook ad copy.
+  - Expanded test suite to 66 passing tests across 11 suites with 0 lint errors.
 - **Change Request CR-002: Israel Market Localization & Removal of Avito/Kufar**:
   - Removed Avito (`AVITO`) and Kufar (`KUFAR`) from platforms, types, prompt registry, and UI.
   - Added Yad2 (`YAD2`) as dedicated Israeli classified platform.

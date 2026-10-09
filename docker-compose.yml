@@ -4,7 +4,7 @@ services:
     container_name: sell_helper
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3021:3000"
     volumes:
       - ./data:/app/data
     environment:
@@ -13,5 +13,5 @@ services:
       - TELEGRAM_BOT_TOKEN=
       - AUTHORIZED_USERS=
       - GEMINI_API_KEY=
-      - WEB_BASE_URL=
+      - WEB_BASE_URL=${WEB_BASE_URL:-http://192.168.8.213:3021}
       - DATABASE_URL=file:/app/data/sell_helper.db

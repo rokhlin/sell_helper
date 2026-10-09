@@ -23,6 +23,26 @@ Your mission is to analyze user submissions (item descriptions, photos, and voic
      * Russian (RU) - for Israeli Russian-speaking resale chats/channels
      * Hebrew (HE) - for local Israeli channels
    (Always specify the "language" property: "HE", "RU", or "EN").
+10. Analyze the Israeli Facebook ecosystem and recommend the Top-5 specific Facebook channels and groups best suited for listing this specific item based on category, target audience, and seller city.
+    Choose from known active communities or formulate direct Facebook search group links:
+    - General Israeli Resale:
+      * "Secret Tel Aviv" (EN) - https://www.facebook.com/groups/secrettelaviv/
+      * "Барахолка Израиль | Купи / Продай" (RU) - https://www.facebook.com/groups/baraholka.israel/
+      * "Second Hand Israel יד 2 ישראל" (HE) - https://www.facebook.com/groups/secondhand.israel/
+      * "Покупка / Продажа в Израиле" (RU) - https://www.facebook.com/groups/kuplyu.prodam.israel/
+      * "Facebook Marketplace Israel" (HE) - https://www.facebook.com/marketplace/
+    - City / Region Specific (match seller city if known):
+      * Tel Aviv: "Secret Tel Aviv", "פשפשוק תל אביב", "Барахолка Тель-Авив / Бат-Ям / Холон"
+      * Haifa & North: "פשפשוק חיפה והצפון", "Барахолка Хайфа и Крайот"
+      * Jerusalem: "Secret Jerusalem", "Барахолка Иерусалим"
+      * Netanya / Sharon: "Барахолка Нетания и Шарон"
+      * South / Beer Sheva: "Барахолка Юг Израиля / Беэр-Шева"
+    - Category Niche (match product category):
+      * Electronics/Computers: "פשפשוק גאדג'טים ומחשבים", "Куплю / Продам Электронику в Израиле"
+      * Furniture/Home: "פשפשוק ריהוט ומוצרים לבית", "Мебель и вещи для дома б/у в Израиле"
+      * Baby/Kids: "Детская барахолка Израиль"
+    - If no exact direct URL is known, synthesize a clean Facebook Groups search URL:
+      https://www.facebook.com/groups/search/groups/?q=<URL_ENCODED_QUERY>
 
 CRITICAL: Always respond with ONLY a valid JSON object strictly matching this TypeScript structure:
 {
@@ -51,6 +71,15 @@ CRITICAL: Always respond with ONLY a valid JSON object strictly matching this Ty
       "title": string,
       "content": string,
       "recommendedPrice": number
+    }
+  ],
+  "facebookChannels": [
+    {
+      "name": string,
+      "url": string,
+      "language": "HE" | "RU" | "EN",
+      "type": "MARKETPLACE" | "CITY_COMMUNITY" | "GENERAL_RESALE" | "CATEGORY_NICHE",
+      "description": string
     }
   ]
 }`;

@@ -24,7 +24,9 @@ export default (): AppConfig => {
     port,
     environment: process.env.NODE_ENV || 'development',
     databaseUrl: process.env.DATABASE_URL || 'file:./data/sell_helper.db',
-    webBaseUrl: process.env.WEB_BASE_URL || `http://localhost:${port}`,
+    webBaseUrl: process.env.WEB_BASE_URL?.trim()
+      ? process.env.WEB_BASE_URL.trim().replace(/\/+$/, '')
+      : `http://localhost:${port}`,
     telegram: {
       botToken: process.env.TELEGRAM_BOT_TOKEN || '',
       authorizedUsers,

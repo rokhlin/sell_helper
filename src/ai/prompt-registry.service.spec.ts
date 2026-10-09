@@ -21,6 +21,7 @@ describe('PromptRegistryService', () => {
     expect(instruction).toContain('"itemTitle"');
     expect(instruction).toContain('"priceEstimation"');
     expect(instruction).toContain('"ads"');
+    expect(instruction).toContain('"facebookChannels"');
   });
 
   it('should build user prompt with photo guidance and city when provided', () => {
