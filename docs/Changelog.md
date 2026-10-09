@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
   - Workflow now runs unit tests before the build/push step (gate on green tests).
   - Published image tags: exact version, `latest`, and `MAJOR.MINOR` via `docker/metadata-action`; GHA build cache enabled.
   - Updated `docker-compose.yml` to pull from `ghcr.io/rokhlin/sell_helper:latest` instead of performing a local build — deployment hosts no longer require Node.js or source code.
+- **Automatic Database Initialization on Container Startup**:
+  - Added `docker-entrypoint.sh` executing `npx prisma db push --skip-generate` on container boot to ensure SQLite schema and tables are automatically initialized on fresh volume mounts.
+  - Moved `prisma` package to production `dependencies` in `package.json` and added `openssl` to Alpine runner image for runtime Prisma engine execution.
+  - Added `.gitattributes` to enforce LF line endings for shell scripts.
 
 
 ## [0.1.0] - 2026-10-03
