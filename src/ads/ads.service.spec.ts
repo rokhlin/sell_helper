@@ -116,6 +116,7 @@ describe('AdsService', () => {
         estimatedPriceMin: 100,
         estimatedPriceMax: 150,
         currency: 'ILS',
+        recommendedChannels: null,
         status: 'COMPLETED',
       },
     });
@@ -128,6 +129,49 @@ describe('AdsService', () => {
         adContent: 'Ad Content Yad2',
         recommendedPrice: 130,
       },
+    });
+  });
+
+  it('should save analysis result with facebook channels', async () => {
+    const analysisWithChannels: AiAnalysisResult = {
+      itemTitle: 'Test Phone',
+      category: 'Smartphones',
+      condition: 'New',
+      city: 'Тель-Авив',
+      isComplete: true,
+      missingDetails: [],
+      clarifyingQuestions: [],
+      hasPhoto: true,
+      priceEstimation: {
+        min: 100,
+        max: 150,
+        recommended: 130,
+        currency: 'ILS',
+        reasoning: 'Good condition',
+      },
+      recommendedPlatforms: ['YAD2', 'TELEGRAM'],
+      ads: [],
+      facebookChannels: [
+        {
+          name: 'Secret Tel Aviv',
+          url: 'https://www.facebook.com/groups/secrettelaviv/',
+          language: 'EN',
+          type: 'CITY_COMMUNITY',
+          description: 'Top expat group in Tel Aviv',
+        },
+      ],
+    };
+    mockPrisma.saleRequest.update.mockResolvedValue({ id: 'req-1' });
+
+    await service.saveAnalysisResult('req-1', analysisWithChannels);
+
+    expect(mockPrisma.saleRequest.update).toHaveBeenCalledWith({
+      where: { id: 'req-1' },
+      data: expect.objectContaining({
+        recommendedChannels: JSON.stringify(
+          analysisWithChannels.facebookChannels,
+        ),
+      }),
     });
   });
 
@@ -153,13 +197,30 @@ describe('AdsService', () => {
     });
   });
 
-  it('should get sale request with details', async () => {
-    const mockRequest = { id: 'req-1', media: [], generatedAds: [] };
+  it('should get sale request with details and parsed channels', async () => {
+    const mockChannels = [
+      {
+        name: 'Secret Tel Aviv',
+        url: 'https://www.facebook.com/groups/secrettelaviv/',
+        language: 'EN',
+        type: 'CITY_COMMUNITY',
+        description: 'Expat community',
+      },
+    ];
+    const mockRequest = {
+      id: 'req-1',
+      recommendedChannels: JSON.stringify(mockChannels),
+      media: [],
+      generatedAds: [],
+    };
     mockPrisma.saleRequest.findUnique.mockResolvedValue(mockRequest);
 
     const result = await service.getSaleRequestWithDetails('req-1');
 
-    expect(result).toEqual(mockRequest);
+    expect(result).toEqual({
+      ...mockRequest,
+      facebookChannels: mockChannels,
+    });
     expect(mockPrisma.saleRequest.findUnique).toHaveBeenCalledWith({
       where: { id: 'req-1' },
       include: { media: true, generatedAds: true },
@@ -172,7 +233,10 @@ describe('AdsService', () => {
 
     const result = await service.getLatestSaleRequestForUser('user-1');
 
-    expect(result).toEqual(mockRequest);
+    expect(result).toEqual({
+      ...mockRequest,
+      facebookChannels: [],
+    });
     expect(mockPrisma.saleRequest.findFirst).toHaveBeenCalledWith({
       where: { userId: 'user-1' },
       orderBy: { createdAt: 'desc' },

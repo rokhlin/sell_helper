@@ -2,7 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
 import { PromptRegistryService } from './prompt-registry.service';
-import { AiAnalysisResult, AnalyzeItemInput, TargetPlatform } from './ai.types';
+import {
+  AiAnalysisResult,
+  AnalyzeItemInput,
+  FacebookChannelRecommendation,
+  FacebookCommunityType,
+  TargetPlatform,
+} from './ai.types';
+import { getRecommendedFacebookChannels } from './community-catalog';
 
 @Injectable()
 export class AiService {
@@ -182,6 +189,42 @@ export class AiService {
         }))
       : [];
 
+    const validCommunityTypes: FacebookCommunityType[] = [
+      'MARKETPLACE',
+      'CITY_COMMUNITY',
+      'GENERAL_RESALE',
+      'CATEGORY_NICHE',
+    ];
+
+    let facebookChannels: FacebookChannelRecommendation[] = [];
+    if (Array.isArray(data.facebookChannels)) {
+      facebookChannels = data.facebookChannels
+        .filter(
+          (ch: any) =>
+            ch &&
+            typeof ch.name === 'string' &&
+            typeof ch.url === 'string' &&
+            ch.name.trim().length > 0 &&
+            ch.url.trim().length > 0,
+        )
+        .map((ch: any) => ({
+          name: String(ch.name),
+          url: String(ch.url),
+          language: validLanguages.includes(ch.language) ? ch.language : 'RU',
+          type: validCommunityTypes.includes(ch.type)
+            ? ch.type
+            : 'GENERAL_RESALE',
+          description: String(ch.description || ''),
+        }));
+    }
+
+    if (facebookChannels.length === 0) {
+      facebookChannels = getRecommendedFacebookChannels(
+        data.category,
+        data.city,
+      );
+    }
+
     return {
       itemTitle: String(data.itemTitle || 'Товар без названия'),
       category: String(data.category || 'Другое'),
@@ -227,6 +270,7 @@ export class AiService {
                 ),
               },
             ],
+      facebookChannels,
     };
   }
 
@@ -293,6 +337,7 @@ export class AiService {
           recommendedPrice: 200,
         },
       ],
+      facebookChannels: getRecommendedFacebookChannels('Электроника', city),
     };
   }
 }
