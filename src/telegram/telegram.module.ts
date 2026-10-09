@@ -18,9 +18,13 @@ import { TelegramUpdate } from './telegram.update';
       useFactory: (configService: ConfigService) => {
         const token =
           configService.get<string>('telegram.botToken') || 'dummy_token';
+        const isTest =
+          configService.get<string>('environment') === 'test' ||
+          process.env.NODE_ENV === 'test';
         return {
           token,
           middlewares: [session()],
+          launchOptions: isTest ? false : undefined,
         };
       },
     }),
