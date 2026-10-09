@@ -4,10 +4,13 @@ services:
     container_name: sell_helper
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
-    env_file:
-      - ./data/config/.env
+      - "3000:3000"
     volumes:
       - ./data:/app/data
     environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - TELEGRAM_BOT_TOKEN=
+      - AUTHORIZED_USERS=
+      - GEMINI_API_KEY=
       - DATABASE_URL=file:/app/data/sell_helper.db

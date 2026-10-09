@@ -20,6 +20,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install openssl for Prisma engines on Alpine
+RUN apk add --no-cache openssl
+
 # OCI labels – required to link the package to the repository on GHCR
 # (see https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#labelling-container-images)
 LABEL org.opencontainers.image.source="https://github.com/rokhlin/sell_helper"
@@ -37,6 +40,10 @@ COPY --from=builder /app/prisma ./prisma
 # Create volume mount points for SQLite and uploads
 RUN mkdir -p /app/data /app/data/uploads
 
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 3000
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]
