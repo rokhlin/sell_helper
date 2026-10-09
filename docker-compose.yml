@@ -13,4 +13,5 @@ services:
       - TELEGRAM_BOT_TOKEN=
       - AUTHORIZED_USERS=
       - GEMINI_API_KEY=
+      - WEB_BASE_URL=
       - DATABASE_URL=file:/app/data/sell_helper.db

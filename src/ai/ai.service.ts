@@ -9,7 +9,10 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly client: GoogleGenAI | null = null;
   private readonly primaryModel = 'gemini-3.8-flash';
-  private readonly fallbackModel = 'gemini-2.5-flash';
+  private readonly fallbackModels = [
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+  ];
 
   constructor(
     private readonly configService: ConfigService,
@@ -92,8 +95,8 @@ export class AiService {
 
     const systemInstruction = this.promptRegistry.getSystemInstruction();
 
-    // Try primary model, fallback on error
-    const modelsToTry = [this.primaryModel, this.fallbackModel];
+    // Try primary model, fallback on error through resilient cascade
+    const modelsToTry = [this.primaryModel, ...this.fallbackModels];
     let rawResponseText = '';
     let lastError: Error | null = null;
 

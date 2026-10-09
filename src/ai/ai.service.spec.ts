@@ -173,5 +173,60 @@ describe('AiService', () => {
       expect(result.priceEstimation.currency).toBe('ILS');
       expect(result.city).toBe('Тель-Авив');
     });
+
+    it('should successfully fallback to secondary model when primary model fails', async () => {
+      const mockSuccessJson = JSON.stringify({
+        itemTitle: 'Самокат Xiaomi Pro 2',
+        category: 'Транспорт',
+        condition: 'Хорошее',
+        city: 'Хайфа',
+        isComplete: true,
+        missingDetails: [],
+        clarifyingQuestions: [],
+        hasPhoto: false,
+        photoRecommendations: 'Фото колес и дисплея',
+        suggestedPhotoPrompt: 'Xiaomi Pro 2 scooter',
+        priceEstimation: {
+          min: 800,
+          max: 1000,
+          recommended: 900,
+          currency: 'ILS',
+          reasoning: 'Спрос на самокаты в Хайфе стабильный',
+        },
+        recommendedPlatforms: ['YAD2'],
+        ads: [],
+      });
+
+      const generateContentMock = jest
+        .fn()
+        .mockRejectedValueOnce(
+          new Error('503 This model is currently experiencing high demand'),
+        )
+        .mockResolvedValueOnce({
+          text: mockSuccessJson,
+        });
+
+      (service as any).client = {
+        models: {
+          generateContent: generateContentMock,
+        },
+      };
+
+      const result = await service.analyzeItem({
+        text: 'Продам электросамокат Xiaomi в Хайфе',
+      });
+
+      expect(generateContentMock).toHaveBeenCalledTimes(2);
+      expect(generateContentMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ model: 'gemini-3.8-flash' }),
+      );
+      expect(generateContentMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ model: 'gemini-3.5-flash' }),
+      );
+      expect(result.itemTitle).toBe('Самокат Xiaomi Pro 2');
+      expect(result.priceEstimation.recommended).toBe(900);
+    });
   });
 });

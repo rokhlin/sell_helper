@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- **Gemini AI Model Cascade & Resilience**:
+  - Replaced decommissioned `gemini-2.5-flash` with active models `gemini-3.5-flash` and `gemini-3.1-flash-lite` in the fallback cascade to eliminate 404 Not Found errors.
+  - Implemented automatic failover from `gemini-3.8-flash` to secondary models to smoothly withstand transient 503 high-demand load spikes.
+- **Telegram Inline Keyboard URL Handling**:
+  - Added URL validation for inline keyboard buttons (`isValidTelegramButtonUrl`), preventing Telegram 400 Bad Request errors when `WEB_BASE_URL` is set to `localhost` or non-public domains.
+  - Formatted local web preview links as copyable text in the message body when a public domain is not configured, while retaining the auto-publish callback button.
+  - Added defensive error recovery when sending Telegram messages with inline keyboards, falling back to clean plain text without throwing unhandled exceptions.
+  - Exposed `WEB_BASE_URL` in `docker-compose.yml`, `.env.example`, and `data/config/.env.example`.
+
 ### Added
 - **Change Request CR-002: Israel Market Localization & Removal of Avito/Kufar**:
   - Removed Avito (`AVITO`) and Kufar (`KUFAR`) from platforms, types, prompt registry, and UI.
