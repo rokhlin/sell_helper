@@ -60,6 +60,7 @@ describe('AiService', () => {
         itemTitle: 'Sony PlayStation 5',
         category: 'Игровые приставки',
         condition: 'Отличное',
+        city: 'Тель-Авив',
         isComplete: true,
         missingDetails: [],
         clarifyingQuestions: [],
@@ -67,19 +68,20 @@ describe('AiService', () => {
         photoRecommendations: 'Фото со всех сторон',
         suggestedPhotoPrompt: 'PS5 console on table',
         priceEstimation: {
-          min: 400,
-          max: 450,
-          recommended: 430,
-          currency: 'USD',
-          reasoning: 'Хороший спрос на вторичке',
+          min: 1400,
+          max: 1600,
+          recommended: 1500,
+          currency: 'ILS',
+          reasoning: 'Хороший спрос на вторичке в Израиле',
         },
-        recommendedPlatforms: ['AVITO', 'KUFAR'],
+        recommendedPlatforms: ['YAD2', 'FACEBOOK'],
         ads: [
           {
-            platform: 'AVITO',
-            title: 'Sony PlayStation 5 в отличном состоянии',
-            content: 'Продам PS5, полный комплект.',
-            recommendedPrice: 430,
+            platform: 'YAD2',
+            language: 'HE',
+            title: 'Sony PlayStation 5 במצב מעולה',
+            content: 'למכירה PS5, כולל שלטים.',
+            recommendedPrice: 1500,
           },
         ],
       });
@@ -95,14 +97,16 @@ describe('AiService', () => {
 
       const result = await service.analyzeItem({
         text: 'Продам Sony PlayStation 5 в отличном состоянии',
+        city: 'Тель-Авив',
         images: [{ base64: 'abc', mimeType: 'image/jpeg' }],
       });
 
       expect(result.itemTitle).toBe('Sony PlayStation 5');
       expect(result.isComplete).toBe(true);
-      expect(result.priceEstimation.recommended).toBe(430);
+      expect(result.priceEstimation.recommended).toBe(1500);
       expect(result.ads).toHaveLength(1);
-      expect(result.ads[0].platform).toBe('AVITO');
+      expect(result.ads[0].platform).toBe('YAD2');
+      expect(result.ads[0].language).toBe('HE');
     });
 
     it('should handle markdown-wrapped json codeblocks from Gemini', async () => {
@@ -111,6 +115,7 @@ describe('AiService', () => {
   "itemTitle": "Ноутбук Lenovo ThinkPad",
   "category": "Компьютеры",
   "condition": "Хорошее",
+  "city": "Хайфа",
   "isComplete": false,
   "missingDetails": ["Объем SSD", "Количество RAM"],
   "clarifyingQuestions": ["Сколько оперативной памяти установлено?"],
@@ -118,13 +123,13 @@ describe('AiService', () => {
   "photoRecommendations": "Сделайте фото экрана и клавиатуры",
   "suggestedPhotoPrompt": "Lenovo ThinkPad laptop",
   "priceEstimation": {
-    "min": 300,
-    "max": 350,
-    "recommended": 330,
-    "currency": "USD",
+    "min": 1000,
+    "max": 1200,
+    "recommended": 1100,
+    "currency": "ILS",
     "reasoning": "Популярная бизнес-модель"
   },
-  "recommendedPlatforms": ["AVITO", "TELEGRAM"],
+  "recommendedPlatforms": ["YAD2", "TELEGRAM"],
   "ads": []
 }
 \`\`\``;
@@ -164,7 +169,9 @@ describe('AiService', () => {
 
       expect(result).toBeDefined();
       expect(result.itemTitle).toBe('Велосипед горный');
-      expect(result.priceEstimation.recommended).toBe(65);
+      expect(result.priceEstimation.recommended).toBe(200);
+      expect(result.priceEstimation.currency).toBe('ILS');
+      expect(result.city).toBe('Тель-Авив');
     });
   });
 });

@@ -112,7 +112,7 @@ export class TelegramUpdate {
   async onAutoPublishAction(@Ctx() ctx: Context) {
     await ctx.answerCbQuery('🚀 Автопубликация');
     await ctx.reply(
-      '🚀 Прямая автопубликация на площадки (Avito, Kufar, Facebook) запланирована в рамках этапа SH-04.',
+      '🚀 Прямая автопубликация на площадки (Yad2, Facebook) запланирована в рамках этапа SH-04.',
     );
   }
 
@@ -131,11 +131,21 @@ export class TelegramUpdate {
     );
     await this.safelySendChatAction(ctx, 'typing');
 
+    const detectedCity = this.detectIsraeliCity(text);
+
     // 1. Create sale request record in DB
-    const saleRequest = await this.adsService.createSaleRequest(userId, text);
+    const saleRequest = await this.adsService.createSaleRequest(
+      userId,
+      text,
+      undefined,
+      detectedCity,
+    );
 
     // 2. Perform AI analysis using Gemini
-    const analysis = await this.aiService.analyzeItem({ text });
+    const analysis = await this.aiService.analyzeItem({
+      text,
+      city: detectedCity,
+    });
 
     // 3. Persist analysis results & generated ads
     await this.adsService.saveAnalysisResult(saleRequest.id, analysis);
@@ -161,9 +171,13 @@ export class TelegramUpdate {
     );
     await this.safelySendChatAction(ctx, 'typing');
 
+    const detectedCity = this.detectIsraeliCity(caption);
+
     const saleRequest = await this.adsService.createSaleRequest(
       userId,
       caption || 'Фотография товара от пользователя',
+      undefined,
+      detectedCity,
     );
     await this.adsService.attachMedia(saleRequest.id, 'IMAGE', photo.file_id);
 
@@ -183,7 +197,8 @@ export class TelegramUpdate {
     const analysis = await this.aiService.analyzeItem({
       text:
         caption ||
-        'Определи товар по предоставленному фото, оцени состояние и рыночную стоимость.',
+        'Определи товар по предоставленному фото, оцени состояние и рыночную стоимость для Израиля.',
+      city: detectedCity,
       images: imageBase64
         ? [{ base64: imageBase64, mimeType: 'image/jpeg' }]
         : undefined,
@@ -227,7 +242,7 @@ export class TelegramUpdate {
     }
 
     const analysis = await this.aiService.analyzeItem({
-      text: 'Расшифруй и проанализируй голосовое описание товара для продажи.',
+      text: 'Расшифруй и проанализируй голосовое описание товара для продажи в Израиле.',
       audio: audioBase64
         ? { base64: audioBase64, mimeType: 'audio/ogg' }
         : undefined,
@@ -235,6 +250,36 @@ export class TelegramUpdate {
 
     await this.adsService.saveAnalysisResult(saleRequest.id, analysis);
     await this.replyWithAnalysis(ctx, analysis, saleRequest.id);
+  }
+
+  private detectIsraeliCity(text: string): string | undefined {
+    if (!text) return undefined;
+    const lower = text.toLowerCase();
+    const cityMap: [RegExp, string][] = [
+      [/тель[- ]авив|tel[- ]aviv|תל[- ]אביב/i, 'Тель-Авив'],
+      [/иерусалим|jerusalem|ירושלים/i, 'Иерусалим'],
+      [/хайф[аеыу]|haifa|חיפה/i, 'Хайфа'],
+      [/нетан[иь][яеию]|netanya|נתניה/i, 'Нетания'],
+      [/бат[- ]ям|bat[- ]yam|בת[- ]ים/i, 'Бат-Ям'],
+      [/ришон[- ]ле[- ]цион|ришон|rishon|ראשון לציון/i, 'Ришон-ле-Цион'],
+      [/ашдод|ashdod|אשדוד/i, 'Ашдод'],
+      [/ашкелон|ashkelon|אשקלון/i, 'Ашкелон'],
+      [/беэр[- ]шев[аеы]|beer[- ]sheva|באר שבע/i, 'Беэр-Шева'],
+      [/петах[- ]тикв[аеы]|petah[- ]tikva|פתח תקווה/i, 'Петах-Тиква'],
+      [/холон|holon|חולון/i, 'Холон'],
+      [/рамат[- ]ган|ramat[- ]gan|רמת גן/i, 'Рамат-Ган'],
+      [/герцли[ияе]|herzliya|הרצליה/i, 'Герцлия'],
+      [/реховот|rehovot|רחובות/i, 'Реховот'],
+      [/кфар[- ]саб[аеы]|kfar[- ]saba|כפר סבא/i, 'Кфар-Саба'],
+      [/раанан[аеы]|ra'anana|raanana|רעננה/i, 'Раанана'],
+    ];
+
+    for (const [pattern, name] of cityMap) {
+      if (pattern.test(lower)) {
+        return name;
+      }
+    }
+    return undefined;
   }
 
   private async replyWithAnalysis(
@@ -248,15 +293,24 @@ export class TelegramUpdate {
     lines.push(`🏷 <b>Товар:</b> ${this.escapeHtml(analysis.itemTitle)}`);
     lines.push(`📂 <b>Категория:</b> ${this.escapeHtml(analysis.category)}`);
     lines.push(`✨ <b>Состояние:</b> ${this.escapeHtml(analysis.condition)}`);
+    if (analysis.city) {
+      lines.push(`📍 <b>Город:</b> ${this.escapeHtml(analysis.city)}, Израиль`);
+    } else {
+      lines.push(`📍 <b>Локация:</b> <i>Израиль (город не указан)</i>`);
+    }
     lines.push('');
 
     // Price Estimation
     lines.push(`💰 <b>Оценка стоимости:</b>`);
+    const curr =
+      analysis.priceEstimation.currency === 'ILS'
+        ? '₪'
+        : analysis.priceEstimation.currency;
     lines.push(
-      `• Диапазон: <code>${analysis.priceEstimation.min} — ${analysis.priceEstimation.max} ${this.escapeHtml(analysis.priceEstimation.currency)}</code>`,
+      `• Диапазон: <code>${analysis.priceEstimation.min} — ${analysis.priceEstimation.max} ${curr}</code>`,
     );
     lines.push(
-      `• Рекомендуемая цена продажи: <b>${analysis.priceEstimation.recommended} ${this.escapeHtml(analysis.priceEstimation.currency)}</b>`,
+      `• Рекомендуемая цена: <b>${analysis.priceEstimation.recommended} ${curr}</b>`,
     );
     lines.push(
       `💡 <i>${this.escapeHtml(analysis.priceEstimation.reasoning)}</i>`,
@@ -269,7 +323,7 @@ export class TelegramUpdate {
     );
     lines.push('');
 
-    // Photo Guidance (AC-2)
+    // Photo Guidance
     if (analysis.hasPhoto) {
       lines.push(`📸 <b>Фото:</b> Прикреплено к описанию.`);
     } else {
@@ -281,13 +335,13 @@ export class TelegramUpdate {
       }
       if (analysis.suggestedPhotoPrompt) {
         lines.push(
-          `🎨 <i>Промпт для поиска/генерации:</i> <code>${this.escapeHtml(analysis.suggestedPhotoPrompt)}</code>`,
+          `🎨 <i>Промпт:</i> <code>${this.escapeHtml(analysis.suggestedPhotoPrompt)}</code>`,
         );
       }
     }
     lines.push('');
 
-    // Clarifying Questions if incomplete (AC-3, AC-4)
+    // Clarifying Questions if incomplete
     if (
       !analysis.isComplete &&
       analysis.clarifyingQuestions &&
@@ -303,12 +357,15 @@ export class TelegramUpdate {
       lines.push('');
     }
 
-    // Generated Ads (AC-6)
+    // Generated Ads
     if (analysis.ads && analysis.ads.length > 0) {
       lines.push(`📝 <b>Готовые тексты объявлений:</b>`);
       for (const ad of analysis.ads) {
+        const langBadge = ad.language ? ` (${ad.language})` : '';
         lines.push(`\n━━━━━━━━━━━━━━━━━━`);
-        lines.push(`<b>[${ad.platform}] ${this.escapeHtml(ad.title)}</b>`);
+        lines.push(
+          `<b>[${ad.platform}${langBadge}] ${this.escapeHtml(ad.title)}</b>`,
+        );
         lines.push(`${this.escapeHtml(ad.content)}`);
       }
     }

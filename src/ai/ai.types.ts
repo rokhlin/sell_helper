@@ -1,7 +1,9 @@
-export type TargetPlatform = 'AVITO' | 'KUFAR' | 'FACEBOOK' | 'TELEGRAM';
+export type TargetPlatform = 'FACEBOOK' | 'TELEGRAM' | 'YAD2';
+export type AdLanguage = 'HE' | 'RU' | 'EN';
 
 export interface PlatformAd {
   platform: TargetPlatform;
+  language?: AdLanguage;
   title: string;
   content: string;
   recommendedPrice?: number;
@@ -19,6 +21,7 @@ export interface AiAnalysisResult {
   itemTitle: string;
   category: string;
   condition: string;
+  city?: string;
   isComplete: boolean;
   missingDetails: string[];
   clarifyingQuestions: string[];
@@ -38,6 +41,7 @@ export interface MediaInput {
 
 export interface AnalyzeItemInput {
   text: string;
+  city?: string;
   images?: MediaInput[];
   audio?: MediaInput;
   previousContext?: string;

@@ -50,6 +50,7 @@ export class AiService {
 
     const userPrompt = this.promptRegistry.buildUserPrompt({
       text: input.text,
+      city: input.city,
       hasPhoto,
       hasAudio,
       previousContext: input.previousContext,
@@ -155,21 +156,20 @@ export class AiService {
     data: any,
     hasPhotoProvided: boolean,
   ): AiAnalysisResult {
-    const validPlatforms: TargetPlatform[] = [
-      'AVITO',
-      'KUFAR',
-      'FACEBOOK',
-      'TELEGRAM',
-    ];
+    const validPlatforms: TargetPlatform[] = ['YAD2', 'FACEBOOK', 'TELEGRAM'];
+    const validLanguages: ('HE' | 'RU' | 'EN')[] = ['HE', 'RU', 'EN'];
     const platforms: TargetPlatform[] = Array.isArray(data.recommendedPlatforms)
       ? data.recommendedPlatforms.filter((p: any) => validPlatforms.includes(p))
-      : ['AVITO', 'KUFAR', 'TELEGRAM'];
+      : ['YAD2', 'FACEBOOK', 'TELEGRAM'];
 
     const ads = Array.isArray(data.ads)
       ? data.ads.map((ad: any) => ({
-          platform: validPlatforms.includes(ad.platform)
-            ? ad.platform
-            : 'AVITO',
+          platform: validPlatforms.includes(ad.platform) ? ad.platform : 'YAD2',
+          language: validLanguages.includes(ad.language)
+            ? ad.language
+            : ad.platform === 'YAD2'
+              ? 'HE'
+              : 'RU',
           title: String(ad.title || data.itemTitle || 'Товар на продажу'),
           content: String(ad.content || ''),
           recommendedPrice: Number(
@@ -182,6 +182,7 @@ export class AiService {
       itemTitle: String(data.itemTitle || 'Товар без названия'),
       category: String(data.category || 'Другое'),
       condition: String(data.condition || 'Б/У в хорошем состоянии'),
+      city: data.city ? String(data.city) : undefined,
       isComplete: Boolean(data.isComplete),
       missingDetails: Array.isArray(data.missingDetails)
         ? data.missingDetails
@@ -200,22 +201,23 @@ export class AiService {
         min: Number(data.priceEstimation?.min || 0),
         max: Number(data.priceEstimation?.max || 0),
         recommended: Number(data.priceEstimation?.recommended || 0),
-        currency: String(data.priceEstimation?.currency || 'USD'),
+        currency: String(data.priceEstimation?.currency || 'ILS'),
         reasoning: String(
           data.priceEstimation?.reasoning ||
-            'Оценка на основе аналогичных предложений вторичного рынка.',
+            'Оценка на основе аналогичных предложений вторичного рынка Израиля.',
         ),
       },
       recommendedPlatforms:
-        platforms.length > 0 ? platforms : ['AVITO', 'KUFAR', 'TELEGRAM'],
+        platforms.length > 0 ? platforms : ['YAD2', 'FACEBOOK', 'TELEGRAM'],
       ads:
         ads.length > 0
           ? ads
           : [
               {
-                platform: 'AVITO',
-                title: String(data.itemTitle || 'Товар на продажу'),
-                content: `Продам ${data.itemTitle || 'товар'}. Состояние: ${data.condition || 'хорошее'}.`,
+                platform: 'YAD2',
+                language: 'HE',
+                title: String(data.itemTitle || 'מוצר למכירה'),
+                content: `למכירה ${data.itemTitle || 'מוצר'}. מצב: ${data.condition || 'מצוין'}.`,
                 recommendedPrice: Number(
                   data.priceEstimation?.recommended || 0,
                 ),
@@ -228,10 +230,12 @@ export class AiService {
     const title = input.text
       ? input.text.split('\n')[0].substring(0, 40)
       : 'Товар';
+    const city = input.city || 'Тель-Авив';
     return {
       itemTitle: title,
       category: 'Электроника / Товары для дома',
       condition: 'Б/У в хорошем состоянии',
+      city,
       isComplete: true,
       missingDetails: [],
       clarifyingQuestions: [],
@@ -240,32 +244,49 @@ export class AiService {
         'Сделайте 3-4 фото: общий вид спереди, сзади, шильдик/серийный номер и дефекты при их наличии.',
       suggestedPhotoPrompt: `High-quality photo of ${title}, neutral background, bright natural lighting`,
       priceEstimation: {
-        min: 50,
-        max: 80,
-        recommended: 65,
-        currency: 'USD',
+        min: 150,
+        max: 250,
+        recommended: 200,
+        currency: 'ILS',
         reasoning:
-          'Среднерыночная стоимость на основе аналогичных предложений в хорошем состоянии.',
+          'Среднерыночная стоимость на основе аналогичных предложений в Израиле (секонд-хенд).',
       },
-      recommendedPlatforms: ['AVITO', 'KUFAR', 'TELEGRAM'],
+      recommendedPlatforms: ['YAD2', 'FACEBOOK', 'TELEGRAM'],
       ads: [
         {
-          platform: 'AVITO',
-          title: `Продам ${title}`,
-          content: `Продам ${title}.\nСостояние хорошее, полностью работоспособен.\nВозможен самовывоз или доставка.`,
-          recommendedPrice: 65,
+          platform: 'YAD2',
+          language: 'HE',
+          title: `למכירה ${title}`,
+          content: `למכירה ${title} במצב מצוין.\nמיקום: ${city}.\nמחיר: 200 ₪. איסוף עצמי.`,
+          recommendedPrice: 200,
         },
         {
-          platform: 'KUFAR',
-          title: title,
-          content: `${title} в отличном состоянии. Все подробности в сообщениях.`,
-          recommendedPrice: 65,
+          platform: 'FACEBOOK',
+          language: 'HE',
+          title: `למכירה ${title}`,
+          content: `למכירה ${title} במצב מצוין!\nעיר: ${city}.\nמחיר מומלץ: 200 ₪. פרטים בפרטי.`,
+          recommendedPrice: 200,
+        },
+        {
+          platform: 'FACEBOOK',
+          language: 'RU',
+          title: `Продам ${title}`,
+          content: `Продам ${title}.\nСостояние отличное, полностью работоспособен.\nЛокация: ${city}.\nЦена: 200 ₪. Самовывоз.`,
+          recommendedPrice: 200,
+        },
+        {
+          platform: 'FACEBOOK',
+          language: 'EN',
+          title: `For sale: ${title}`,
+          content: `Selling ${title} in great condition.\nLocation: ${city}, Israel.\nPrice: 200 ILS.\nDM for details.`,
+          recommendedPrice: 200,
         },
         {
           platform: 'TELEGRAM',
+          language: 'RU',
           title: `🔥 ${title}`,
-          content: `Продается ${title}!\nЦена: 65 USD.\nПишите в лс для связи.`,
-          recommendedPrice: 65,
+          content: `Продается ${title}!\nГород: ${city}.\nЦена: 200 ₪.\nПишите в лс для связи.`,
+          recommendedPrice: 200,
         },
       ],
     };

@@ -12,6 +12,7 @@ export class AdsService {
     userId: string,
     rawDescription: string,
     itemTitle?: string,
+    city?: string,
   ) {
     this.logger.log(`Creating sale request for user: ${userId}`);
     return this.prisma.saleRequest.create({
@@ -19,6 +20,8 @@ export class AdsService {
         userId,
         rawDescription,
         itemTitle: itemTitle || null,
+        city: city || null,
+        currency: 'ILS',
         status: 'ANALYZING',
       },
     });
@@ -34,9 +37,10 @@ export class AdsService {
       where: { id: saleRequestId },
       data: {
         itemTitle: analysis.itemTitle,
+        city: analysis.city || undefined,
         estimatedPriceMin: analysis.priceEstimation.min,
         estimatedPriceMax: analysis.priceEstimation.max,
-        currency: analysis.priceEstimation.currency || 'USD',
+        currency: analysis.priceEstimation.currency || 'ILS',
         status: analysis.isComplete ? 'COMPLETED' : 'DRAFT',
       },
     });
@@ -48,6 +52,7 @@ export class AdsService {
           data: {
             saleRequestId,
             targetPlatform: ad.platform,
+            language: ad.language || null,
             adTitle: ad.title,
             adContent: ad.content,
             recommendedPrice:

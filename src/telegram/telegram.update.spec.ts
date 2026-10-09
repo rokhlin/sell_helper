@@ -35,6 +35,7 @@ describe('TelegramUpdate', () => {
     itemTitle: 'Велосипед Trek Marlin 5',
     category: 'Спорт и отдых / Велосипеды',
     condition: 'Отличное',
+    city: 'Тель-Авив',
     isComplete: true,
     missingDetails: [],
     clarifyingQuestions: [],
@@ -45,15 +46,17 @@ describe('TelegramUpdate', () => {
       min: 300,
       max: 380,
       recommended: 350,
-      currency: 'USD',
-      reasoning: 'Хороший спрос на качественные брендовые велосипеды.',
+      currency: 'ILS',
+      reasoning:
+        'Хороший спрос на качественные брендовые велосипеды в Израиле.',
     },
-    recommendedPlatforms: ['AVITO', 'KUFAR', 'TELEGRAM'],
+    recommendedPlatforms: ['YAD2', 'FACEBOOK', 'TELEGRAM'],
     ads: [
       {
-        platform: 'AVITO',
-        title: 'Горный велосипед Trek Marlin 5',
-        content: 'Продам отличный горный велосипед Trek Marlin 5.',
+        platform: 'YAD2',
+        language: 'HE',
+        title: 'למכירה אופניים Trek Marlin 5',
+        content: 'למכירה אופני הרים במצב מעולה.',
         recommendedPrice: 350,
       },
     ],
@@ -243,9 +246,12 @@ describe('TelegramUpdate', () => {
       expect(adsService.createSaleRequest).toHaveBeenCalledWith(
         '123456789',
         'Продаю велосипед Trek Marlin 5 в отличном состоянии',
+        undefined,
+        undefined,
       );
       expect(aiService.analyzeItem).toHaveBeenCalledWith({
         text: 'Продаю велосипед Trek Marlin 5 в отличном состоянии',
+        city: undefined,
       });
       expect(adsService.saveAnalysisResult).toHaveBeenCalledWith(
         'req-456',
@@ -255,6 +261,33 @@ describe('TelegramUpdate', () => {
         expect.stringContaining('Trek Marlin 5'),
         expect.objectContaining({ parse_mode: 'HTML' }),
       );
+    });
+
+    it('should detect Israeli city from message text and pass to AI and DB', async () => {
+      const mockCtx = {
+        from: { id: 123456789 },
+        message: {
+          text: 'Продаю диван в Нетании самовывоз',
+        },
+        sendChatAction: jest.fn().mockResolvedValue(true),
+        reply: jest.fn().mockResolvedValue(true),
+      } as any;
+
+      mockAdsService.createSaleRequest.mockResolvedValue({ id: 'req-city' });
+      mockAiService.analyzeItem.mockResolvedValue(mockAnalysisResult);
+
+      await update.onText(mockCtx);
+
+      expect(adsService.createSaleRequest).toHaveBeenCalledWith(
+        '123456789',
+        'Продаю диван в Нетании самовывоз',
+        undefined,
+        'Нетания',
+      );
+      expect(aiService.analyzeItem).toHaveBeenCalledWith({
+        text: 'Продаю диван в Нетании самовывоз',
+        city: 'Нетания',
+      });
     });
 
     it('should include clarifying questions if item information is incomplete', async () => {
@@ -293,7 +326,7 @@ describe('TelegramUpdate', () => {
         from: { id: 123456789 },
         message: {
           photo: [{ file_id: 'low_res_1' }, { file_id: 'high_res_2' }],
-          caption: 'Продаю этот телефон',
+          caption: 'Продаю этот телефон в Хайфе',
         },
         telegram: {
           getFileLink: jest
@@ -312,7 +345,9 @@ describe('TelegramUpdate', () => {
       expect(mockCtx.sendChatAction).toHaveBeenCalledWith('typing');
       expect(adsService.createSaleRequest).toHaveBeenCalledWith(
         '123456789',
-        'Продаю этот телефон',
+        'Продаю этот телефон в Хайфе',
+        undefined,
+        'Хайфа',
       );
       expect(adsService.attachMedia).toHaveBeenCalledWith(
         'req-photo',

@@ -242,10 +242,32 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .platform-AVITO { background: rgba(240, 136, 62, 0.18); color: var(--accent-orange); border: 1px solid rgba(240, 136, 62, 0.3); }
-    .platform-KUFAR { background: rgba(248, 81, 73, 0.18); color: var(--accent-red); border: 1px solid rgba(248, 81, 73, 0.3); }
+    .platform-YAD2 { background: rgba(255, 122, 0, 0.18); color: #ff7a00; border: 1px solid rgba(255, 122, 0, 0.35); }
     .platform-FACEBOOK { background: rgba(56, 139, 253, 0.18); color: var(--accent-blue); border: 1px solid rgba(56, 139, 253, 0.3); }
     .platform-TELEGRAM { background: rgba(57, 197, 207, 0.18); color: var(--accent-cyan); border: 1px solid rgba(57, 197, 207, 0.3); }
+    .lang-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      letter-spacing: 0.03em;
+    }
+    .lang-HE { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); border: 1px solid rgba(163, 113, 247, 0.4); }
+    .lang-RU { background: rgba(56, 139, 253, 0.2); color: var(--accent-blue); border: 1px solid rgba(56, 139, 253, 0.4); }
+    .lang-EN { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); border: 1px solid rgba(63, 185, 80, 0.4); }
+    .rtl-text {
+      direction: rtl;
+      text-align: right;
+    }
+    .city-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--accent-cyan);
+      margin-top: 6px;
+    }
 
     .action-group {
       display: flex;
@@ -327,7 +349,7 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
-        <span>Sell Helper</span> / Web Preview
+        <span>Sell Helper</span> / Web Preview (Israel 🇮🇱)
       </div>
       <div class="badge-status">
         ● <%= saleRequest.status || 'READY' %>
@@ -336,19 +358,28 @@
 
     <div class="hero-card">
       <h1 class="hero-title"><%= saleRequest.itemTitle || 'Товар на продажу' %></h1>
+      <% if (saleRequest.city) { %>
+      <div class="city-badge">
+        📍 <span><%= saleRequest.city %>, Израиль</span>
+      </div>
+      <% } else { %>
+      <div class="city-badge" style="color: var(--text-muted);">
+        📍 <span>Израиль (город уточняется)</span>
+      </div>
+      <% } %>
       
       <div class="price-strip">
         <div class="price-item">
           <span class="price-label">Рекомендуемая цена</span>
           <span class="price-val highlight">
-            <%= (saleRequest.generatedAds && saleRequest.generatedAds[0] && saleRequest.generatedAds[0].recommendedPrice) || saleRequest.estimatedPriceMax || 0 %> <%= saleRequest.currency || 'USD' %>
+            <%= (saleRequest.generatedAds && saleRequest.generatedAds[0] && saleRequest.generatedAds[0].recommendedPrice) || saleRequest.estimatedPriceMax || 0 %> <%= (saleRequest.currency === 'ILS' || !saleRequest.currency) ? '₪' : saleRequest.currency %>
           </span>
         </div>
         <% if (saleRequest.estimatedPriceMin && saleRequest.estimatedPriceMax) { %>
         <div class="price-item">
           <span class="price-label">Рыночный диапазон</span>
           <span class="price-val">
-            <%= saleRequest.estimatedPriceMin %> — <%= saleRequest.estimatedPriceMax %> <%= saleRequest.currency || 'USD' %>
+            <%= saleRequest.estimatedPriceMin %> — <%= saleRequest.estimatedPriceMax %> <%= (saleRequest.currency === 'ILS' || !saleRequest.currency) ? '₪' : saleRequest.currency %>
           </span>
         </div>
         <% } %>
@@ -381,17 +412,25 @@
     <% if (saleRequest.generatedAds && saleRequest.generatedAds.length > 0) { %>
     <div class="tabs-nav" id="tabsNav">
       <% saleRequest.generatedAds.forEach(function(ad, idx) { %>
-      <button class="tab-btn <%= idx === 0 ? 'active' : '' %>" onclick="switchTab('<%= ad.targetPlatform %>')">
-        <%= ad.targetPlatform %>
+      <button class="tab-btn <%= idx === 0 ? 'active' : '' %>" data-tab-id="<%= ad.id %>" onclick="switchTab('<%= ad.id %>')">
+        <%= ad.targetPlatform %> <%= ad.language ? '(' + (ad.language === 'HE' ? 'עברית' : ad.language === 'RU' ? 'RU' : 'EN') + ')' : '' %>
       </button>
       <% }); %>
     </div>
 
     <% saleRequest.generatedAds.forEach(function(ad, idx) { %>
-    <div class="ad-card <%= idx === 0 ? 'active' : '' %>" id="tab-<%= ad.targetPlatform %>">
+    <% const isHe = ad.language === 'HE'; %>
+    <div class="ad-card <%= idx === 0 ? 'active' : '' %>" id="tab-<%= ad.id %>">
       <div class="ad-card-top">
-        <div class="platform-badge platform-<%= ad.targetPlatform %>">
-          <%= ad.targetPlatform %>
+        <div style="display: flex; align-items: center;">
+          <div class="platform-badge platform-<%= ad.targetPlatform %>">
+            <%= ad.targetPlatform %>
+          </div>
+          <% if (ad.language) { %>
+          <span class="lang-badge lang-<%= ad.language %>">
+            <%= ad.language === 'HE' ? 'עברית (IL)' : ad.language === 'RU' ? 'Русский' : 'English' %>
+          </span>
+          <% } %>
         </div>
         <div class="action-group">
           <button class="btn-copy" onclick="copyText(this, 'title-<%= ad.id %>')">
@@ -408,12 +447,12 @@
 
       <div class="field-block">
         <div class="field-label">Заголовок объявления</div>
-        <div class="field-title-box" id="title-<%= ad.id %>"><%= ad.adTitle %></div>
+        <div class="field-title-box <%= isHe ? 'rtl-text' : '' %>" id="title-<%= ad.id %>"><%= ad.adTitle %></div>
       </div>
 
       <div class="field-block">
         <div class="field-label">Текст описания</div>
-        <div class="field-content-box" id="content-<%= ad.id %>"><%= ad.adContent %></div>
+        <div class="field-content-box <%= isHe ? 'rtl-text' : '' %>" id="content-<%= ad.id %>"><%= ad.adContent %></div>
       </div>
     </div>
     <% }); %>
@@ -425,17 +464,17 @@
     <% } %>
 
     <footer>
-      Sell Helper &copy; 2026 &bull; Приватный ассистент перепродажи товаров
+      Sell Helper &copy; 2026 &bull; Приватный ассистент перепродажи товаров в Израиле
     </footer>
   </div>
 
   <script>
-    function switchTab(platform) {
+    function switchTab(adId) {
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent.trim() === platform);
+        btn.classList.toggle('active', btn.dataset.tabId === adId);
       });
       document.querySelectorAll('.ad-card').forEach(card => {
-        card.classList.toggle('active', card.id === 'tab-' + platform);
+        card.classList.toggle('active', card.id === 'tab-' + adId);
       });
     }
 

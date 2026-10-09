@@ -42,12 +42,16 @@ describe('AdsService', () => {
       id: 'req-1',
       userId: 'user-1',
       rawDescription: 'Item description',
+      city: 'Тель-Авив',
+      currency: 'ILS',
     };
     mockPrisma.saleRequest.create.mockResolvedValue(mockRequest);
 
     const result = await service.createSaleRequest(
       'user-1',
       'Item description',
+      undefined,
+      'Тель-Авив',
     );
 
     expect(result).toEqual(mockRequest);
@@ -56,6 +60,8 @@ describe('AdsService', () => {
         userId: 'user-1',
         rawDescription: 'Item description',
         itemTitle: null,
+        city: 'Тель-Авив',
+        currency: 'ILS',
         status: 'ANALYZING',
       },
     });
@@ -66,6 +72,7 @@ describe('AdsService', () => {
       itemTitle: 'Test Phone',
       category: 'Smartphones',
       condition: 'New',
+      city: 'Тель-Авив',
       isComplete: true,
       missingDetails: [],
       clarifyingQuestions: [],
@@ -74,15 +81,16 @@ describe('AdsService', () => {
         min: 100,
         max: 150,
         recommended: 130,
-        currency: 'USD',
+        currency: 'ILS',
         reasoning: 'Good condition',
       },
-      recommendedPlatforms: ['AVITO', 'TELEGRAM'],
+      recommendedPlatforms: ['YAD2', 'TELEGRAM'],
       ads: [
         {
-          platform: 'AVITO',
-          title: 'Ad Title Avito',
-          content: 'Ad Content Avito',
+          platform: 'YAD2',
+          language: 'HE',
+          title: 'Ad Title Yad2',
+          content: 'Ad Content Yad2',
           recommendedPrice: 130,
         },
       ],
@@ -91,6 +99,7 @@ describe('AdsService', () => {
     const mockUpdated = {
       id: 'req-1',
       itemTitle: 'Test Phone',
+      city: 'Тель-Авив',
       status: 'COMPLETED',
     };
     mockPrisma.saleRequest.update.mockResolvedValue(mockUpdated);
@@ -103,18 +112,20 @@ describe('AdsService', () => {
       where: { id: 'req-1' },
       data: {
         itemTitle: 'Test Phone',
+        city: 'Тель-Авив',
         estimatedPriceMin: 100,
         estimatedPriceMax: 150,
-        currency: 'USD',
+        currency: 'ILS',
         status: 'COMPLETED',
       },
     });
     expect(mockPrisma.generatedAd.create).toHaveBeenCalledWith({
       data: {
         saleRequestId: 'req-1',
-        targetPlatform: 'AVITO',
-        adTitle: 'Ad Title Avito',
-        adContent: 'Ad Content Avito',
+        targetPlatform: 'YAD2',
+        language: 'HE',
+        adTitle: 'Ad Title Yad2',
+        adContent: 'Ad Content Yad2',
         recommendedPrice: 130,
       },
     });
