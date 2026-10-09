@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **[SH-02] AI Content Generation Flow**:
+  - Integrated Google Gemini AI SDK (`@google/genai`) with primary `gemini-3.8-flash` model and resilient `gemini-2.5-flash` fallback cascade.
+  - Implemented `AiModule` and `AiService` supporting multimodal item evaluation (text descriptions, photos with visual condition recognition, and voice audio notes).
+  - Implemented `PromptRegistryService` enforcing structured JSON generation for item identification, completeness audit, photo guidance, secondary market pricing (min, max, recommended, currency, reasoning), and platform recommendations.
+  - Implemented `AdsModule` and `AdsService` with Prisma SQLite persistence for `SaleRequest`, `RequestMedia`, and `GeneratedAd` records.
+  - Implemented interactive Telegram handlers (`onText`, `onPhoto`, `onVoice`) with real-time `sendChatAction` indicators (`typing`, `record_voice`), conversational clarification prompting, photo capture recommendations, and tailored ad texts for Avito, Kufar, Facebook Marketplace, and Telegram.
+  - Added callback actions for Web preview link (`webview:<id>`) and auto-publish (`autopublish:<id>`).
+  - Achieved 93.26% test coverage across 53 unit tests with zero lint errors.
 - **Dynamic First-Admin & Telegram Approval Workflow (CR-001)**:
   - First user contacting the bot automatically bootstraps as the system Administrator (`ADMIN` role, immediate authorization).
   - Subsequent unauthorized users are registered as `PENDING` and trigger real-time approval notifications to the administrator.

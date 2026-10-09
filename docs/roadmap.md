@@ -8,7 +8,7 @@
 
 ## Phase 1: Core Features
 - [x] **[SH-01] Telegram Bot Integration & Auth**: Whitelist security, `/start` and `/help` commands, session management.
-- [ ] **[SH-02] AI Content Generation Flow**: Multimodal Gemini API integration for price analysis and ad generation.
+- [x] **[SH-02] AI Content Generation Flow**: Multimodal Gemini API integration for price analysis and ad generation.
 
 ## Phase 2: Advanced Features
 - [ ] **[SH-03] Web View Generation (EJS/Pug)**: Read-only preview links for ad copy and image galleries.

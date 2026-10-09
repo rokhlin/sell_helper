@@ -5,6 +5,7 @@
 - `@nestjs/config`: Environment variable loading and configuration validation
 - `nestjs-telegraf`, `telegraf`: Telegram Bot API client and NestJS integration
 - `@prisma/client`: Auto-generated, type-safe database client for SQLite
+- `@google/genai`: Official Google Gemini API SDK for multimodal AI inference
 - `class-validator`, `class-transformer`: Input validation and serialization
 - `ejs`: Server-Side Rendering template engine for web views
 

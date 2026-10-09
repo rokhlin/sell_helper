@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { AiModule } from './ai/ai.module';
+import { AdsModule } from './ads/ads.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -14,6 +16,8 @@ import { AppService } from './app.service';
       envFilePath: ['data/config/.env', '.env'],
     }),
     DatabaseModule,
+    AiModule,
+    AdsModule,
     TelegramModule,
   ],
   controllers: [AppController],
