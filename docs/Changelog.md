@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **[SH-03] Web View Generation (EJS SSR)**:
+  - Configured NestJS with EJS template engine (`NestExpressApplication`, `views/` directory).
+  - Implemented `WebviewModule` and `WebviewController` handling `GET /ads/:id` with 404 validation.
+  - Designed responsive, dark-mode preview web page (`views/ad-preview.ejs`) with Google Fonts Inter & JetBrains Mono, price breakdown, image gallery, and platform-specific tabs (Avito, Kufar, Facebook, Telegram).
+  - Added interactive 1-click clipboard copy functionality ("Copy Title", "Copy Text", "Copy Full Ad") with 2-second visual confirmation feedback.
+  - Linked Telegram bot responses and inline buttons directly to live preview URLs via `webBaseUrl` configuration (`WEB_BASE_URL`).
+  - Updated `Dockerfile` to copy `views/` into the production container image.
+  - Achieved 93.53% line coverage across 56 passing unit tests with 0 lint violations.
 - **[SH-02] AI Content Generation Flow**:
   - Integrated Google Gemini AI SDK (`@google/genai`) with primary `gemini-3.8-flash` model and resilient `gemini-2.5-flash` fallback cascade.
   - Implemented `AiModule` and `AiService` supporting multimodal item evaluation (text descriptions, photos with visual condition recognition, and voice audio notes).

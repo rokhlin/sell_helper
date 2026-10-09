@@ -5,6 +5,7 @@ import { DatabaseModule } from './database/database.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { AiModule } from './ai/ai.module';
 import { AdsModule } from './ads/ads.module';
+import { WebviewModule } from './webview/webview.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -18,6 +19,7 @@ import { AppService } from './app.service';
     DatabaseModule,
     AiModule,
     AdsModule,
+    WebviewModule,
     TelegramModule,
   ],
   controllers: [AppController],

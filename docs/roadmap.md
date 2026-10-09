@@ -11,5 +11,5 @@
 - [x] **[SH-02] AI Content Generation Flow**: Multimodal Gemini API integration for price analysis and ad generation.
 
 ## Phase 2: Advanced Features
-- [ ] **[SH-03] Web View Generation (EJS/Pug)**: Read-only preview links for ad copy and image galleries.
+- [x] **[SH-03] Web View Generation (EJS/Pug)**: Read-only preview links for ad copy and image galleries.
 - [ ] **[SH-04] Auto-Publishing API (Optional)**: Headless or direct API posting to Avito / Kufar / Facebook.

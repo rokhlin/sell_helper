@@ -24,6 +24,7 @@ describe('Configuration', () => {
     expect(config.port).toBe(3000);
     expect(config.environment).toBe('development');
     expect(config.databaseUrl).toBe('file:./data/sell_helper.db');
+    expect(config.webBaseUrl).toBe('http://localhost:3000');
     expect(config.telegram.botToken).toBe('');
     expect(config.telegram.authorizedUsers).toEqual([]);
     expect(config.gemini.apiKey).toBe('');

@@ -36,6 +36,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
+COPY views ./views
 
 # Create volume mount points for SQLite and uploads
 RUN mkdir -p /app/data /app/data/uploads

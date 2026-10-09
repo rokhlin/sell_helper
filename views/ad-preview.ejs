@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= saleRequest.itemTitle || 'Объявление о продаже' %> | Sell Helper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --card-border: rgba(48, 54, 61, 0.8);
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --heading: #ffffff;
+      --accent-blue: #388bfd;
+      --accent-purple: #a371f7;
+      --accent-cyan: #39c5cf;
+      --accent-green: #3fb950;
+      --accent-orange: #f0883e;
+      --accent-red: #f85149;
+      --radius: 14px;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top right, #161f30 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Top Brand Nav */
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--heading);
+      letter-spacing: -0.02em;
+    }
+    .brand-logo span {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 999px;
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hero Item Card */
+    .hero-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    .hero-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--heading);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .price-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 16px;
+      padding: 16px 20px;
+      background: rgba(13, 17, 23, 0.7);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .price-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .price-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .price-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--heading);
+    }
+    .price-val.highlight {
+      color: var(--accent-cyan);
+    }
+
+    /* Media Gallery */
+    .gallery-section {
+      margin-top: 24px;
+    }
+    .gallery-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .gallery-item {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      background: #11151c;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Platform Tabs & Content */
+    .platforms-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .platforms-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--heading);
+    }
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      background: rgba(22, 27, 34, 0.8);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: var(--heading);
+      border-color: var(--text-muted);
+    }
+    .tab-btn.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 16px rgba(56, 139, 253, 0.35);
+    }
+
+    /* Ad Card */
+    .ad-card {
+      display: none;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      animation: fadeIn 0.3s ease;
+    }
+    .ad-card.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ad-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .platform-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .platform-AVITO { background: rgba(240, 136, 62, 0.18); color: var(--accent-orange); border: 1px solid rgba(240, 136, 62, 0.3); }
+    .platform-KUFAR { background: rgba(248, 81, 73, 0.18); color: var(--accent-red); border: 1px solid rgba(248, 81, 73, 0.3); }
+    .platform-FACEBOOK { background: rgba(56, 139, 253, 0.18); color: var(--accent-blue); border: 1px solid rgba(56, 139, 253, 0.3); }
+    .platform-TELEGRAM { background: rgba(57, 197, 207, 0.18); color: var(--accent-cyan); border: 1px solid rgba(57, 197, 207, 0.3); }
+
+    .action-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-copy {
+      background: #21262d;
+      border: 1px solid #363b42;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.825rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .btn-copy:hover {
+      background: #30363d;
+      border-color: #8b949e;
+      color: var(--heading);
+    }
+    .btn-copy.copied {
+      background: rgba(63, 185, 80, 0.2);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .field-block {
+      margin-bottom: 20px;
+    }
+    .field-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .field-title-box {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--heading);
+      background: rgba(13, 17, 23, 0.6);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .field-content-box {
+      font-size: 0.95rem;
+      color: var(--text);
+      background: rgba(13, 17, 23, 0.6);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      line-height: 1.65;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 24px 0 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="brand-header">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>Sell Helper</span> / Web Preview
+      </div>
+      <div class="badge-status">
+        ● <%= saleRequest.status || 'READY' %>
+      </div>
+    </header>
+
+    <div class="hero-card">
+      <h1 class="hero-title"><%= saleRequest.itemTitle || 'Товар на продажу' %></h1>
+      
+      <div class="price-strip">
+        <div class="price-item">
+          <span class="price-label">Рекомендуемая цена</span>
+          <span class="price-val highlight">
+            <%= (saleRequest.generatedAds && saleRequest.generatedAds[0] && saleRequest.generatedAds[0].recommendedPrice) || saleRequest.estimatedPriceMax || 0 %> <%= saleRequest.currency || 'USD' %>
+          </span>
+        </div>
+        <% if (saleRequest.estimatedPriceMin && saleRequest.estimatedPriceMax) { %>
+        <div class="price-item">
+          <span class="price-label">Рыночный диапазон</span>
+          <span class="price-val">
+            <%= saleRequest.estimatedPriceMin %> — <%= saleRequest.estimatedPriceMax %> <%= saleRequest.currency || 'USD' %>
+          </span>
+        </div>
+        <% } %>
+        <div class="price-item">
+          <span class="price-label">Дата генерации</span>
+          <span class="price-val" style="font-size: 1rem; color: var(--text-muted);">
+            <%= new Date(saleRequest.createdAt).toLocaleDateString('ru-RU') %>
+          </span>
+        </div>
+      </div>
+
+      <% if (saleRequest.media && saleRequest.media.length > 0) { %>
+      <div class="gallery-section">
+        <div class="gallery-title">Прикрепленные фото (<%= saleRequest.media.length %>)</div>
+        <div class="gallery-grid">
+          <% saleRequest.media.forEach(function(m, idx) { %>
+          <div class="gallery-item">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">📷 Фото #<%= idx + 1 %></span>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="platforms-header">
+      <div class="platforms-title">Тексты для публикации</div>
+    </div>
+
+    <% if (saleRequest.generatedAds && saleRequest.generatedAds.length > 0) { %>
+    <div class="tabs-nav" id="tabsNav">
+      <% saleRequest.generatedAds.forEach(function(ad, idx) { %>
+      <button class="tab-btn <%= idx === 0 ? 'active' : '' %>" onclick="switchTab('<%= ad.targetPlatform %>')">
+        <%= ad.targetPlatform %>
+      </button>
+      <% }); %>
+    </div>
+
+    <% saleRequest.generatedAds.forEach(function(ad, idx) { %>
+    <div class="ad-card <%= idx === 0 ? 'active' : '' %>" id="tab-<%= ad.targetPlatform %>">
+      <div class="ad-card-top">
+        <div class="platform-badge platform-<%= ad.targetPlatform %>">
+          <%= ad.targetPlatform %>
+        </div>
+        <div class="action-group">
+          <button class="btn-copy" onclick="copyText(this, 'title-<%= ad.id %>')">
+            🏷️ Копировать заголовок
+          </button>
+          <button class="btn-copy" onclick="copyText(this, 'content-<%= ad.id %>')">
+            📋 Копировать текст
+          </button>
+          <button class="btn-copy" onclick="copyFullAd(this, 'title-<%= ad.id %>', 'content-<%= ad.id %>')">
+            ⚡ Копировать всё
+          </button>
+        </div>
+      </div>
+
+      <div class="field-block">
+        <div class="field-label">Заголовок объявления</div>
+        <div class="field-title-box" id="title-<%= ad.id %>"><%= ad.adTitle %></div>
+      </div>
+
+      <div class="field-block">
+        <div class="field-label">Текст описания</div>
+        <div class="field-content-box" id="content-<%= ad.id %>"><%= ad.adContent %></div>
+      </div>
+    </div>
+    <% }); %>
+
+    <% } else { %>
+    <div class="hero-card">
+      <p style="color: var(--text-muted);">Объявления еще не были сгенерированы для этого запроса.</p>
+    </div>
+    <% } %>
+
+    <footer>
+      Sell Helper &copy; 2026 &bull; Приватный ассистент перепродажи товаров
+    </footer>
+  </div>
+
+  <script>
+    function switchTab(platform) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.trim() === platform);
+      });
+      document.querySelectorAll('.ad-card').forEach(card => {
+        card.classList.toggle('active', card.id === 'tab-' + platform);
+      });
+    }
+
+    async function copyText(btn, elementId) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const text = el.innerText || el.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        showCopied(btn);
+      } catch (err) {
+        fallbackCopy(text, btn);
+      }
+    }
+
+    async function copyFullAd(btn, titleId, contentId) {
+      const titleEl = document.getElementById(titleId);
+      const contentEl = document.getElementById(contentId);
+      const title = titleEl ? (titleEl.innerText || titleEl.textContent) : '';
+      const content = contentEl ? (contentEl.innerText || contentEl.textContent) : '';
+      const fullText = title + '\n\n' + content;
+      try {
+        await navigator.clipboard.writeText(fullText);
+        showCopied(btn);
+      } catch (err) {
+        fallbackCopy(fullText, btn);
+      }
+    }
+
+    function showCopied(btn) {
+      const originalText = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = '✓ Скопировано!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = originalText;
+      }, 2000);
+    }
+
+    function fallbackCopy(text, btn) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showCopied(btn);
+      } catch (e) {
+        alert('Не удалось скопировать текст в буфер');
+      }
+      document.body.removeChild(textarea);
+    }
+  </script>
+</body>
+</html>

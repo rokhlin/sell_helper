@@ -1,4 +1,5 @@
 import { UseGuards, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Update, Start, Help, On, Action, Ctx } from 'nestjs-telegraf';
 import { Context, Markup } from 'telegraf';
 import { TelegramAuthGuard } from './guards/telegram-auth.guard';
@@ -16,6 +17,7 @@ export class TelegramUpdate {
     private readonly telegramService: TelegramService,
     private readonly aiService: AiService,
     private readonly adsService: AdsService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Start()
@@ -90,10 +92,19 @@ export class TelegramUpdate {
   async onWebViewAction(@Ctx() ctx: Context) {
     const match = (ctx as unknown as { match: RegExpMatchArray }).match;
     const requestId = match?.[1];
-    await ctx.answerCbQuery('🌐 Генерация Web-страницы...');
+    const webBaseUrl =
+      this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
+    const webViewUrl = `${webBaseUrl}/ads/${requestId}`;
+
+    await ctx.answerCbQuery('🌐 Открытие Web-страницы...');
     await ctx.reply(
-      `🌐 <b>Web-страница объявления</b>\n\nФункционал просмотра в браузере (SH-03) находится на этапе подключения. Идентификатор объявления: <code>${this.escapeHtml(requestId || '')}</code>`,
-      { parse_mode: 'HTML' },
+      `🌐 <b>Web-страница объявления готова:</b>\n\nСсылка для просмотра и быстрого копирования:\n<a href="${webViewUrl}">${webViewUrl}</a>`,
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.url('🌐 Открыть в браузере', webViewUrl)],
+        ]),
+      },
     );
   }
 
@@ -304,12 +315,13 @@ export class TelegramUpdate {
 
     const messageText = lines.join('\n');
 
+    const webBaseUrl =
+      this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
+    const webViewUrl = `${webBaseUrl}/ads/${saleRequestId}`;
+
     const inlineKeyboard = Markup.inlineKeyboard([
       [
-        Markup.button.callback(
-          '🌐 Web-версия (превью)',
-          `webview:${saleRequestId}`,
-        ),
+        Markup.button.url('🌐 Просмотр Web-версии', webViewUrl),
         Markup.button.callback(
           '🚀 Опубликовать',
           `autopublish:${saleRequestId}`,

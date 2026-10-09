@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { TelegramUpdate } from './telegram.update';
 import { TelegramService } from './telegram.service';
 import { TelegramAuthGuard } from './guards/telegram-auth.guard';
@@ -11,6 +12,13 @@ describe('TelegramUpdate', () => {
   let telegramService: TelegramService;
   let aiService: AiService;
   let adsService: AdsService;
+
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      if (key === 'webBaseUrl') return 'http://localhost:3000';
+      return null;
+    }),
+  };
 
   const mockTelegramService = {
     syncUser: jest.fn(),
@@ -76,6 +84,10 @@ describe('TelegramUpdate', () => {
         {
           provide: AdsService,
           useValue: mockAdsService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
         TelegramAuthGuard,
       ],
@@ -354,8 +366,8 @@ describe('TelegramUpdate', () => {
 
       expect(mockCtx.answerCbQuery).toHaveBeenCalled();
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('req-123'),
-        { parse_mode: 'HTML' },
+        expect.stringContaining('/ads/req-123'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
       );
     });
 
