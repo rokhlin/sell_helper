@@ -1,7 +1,7 @@
 # System Architecture: sell_helper
 
 ## 1. System Overview & Vision
-`sell_helper` is an autonomous, private, AI-augmented assistant designed to streamline the resale of used goods. It operates primarily as an interactive Telegram Bot backed by a robust NestJS backend. The system leverages the Google Gemini AI engine to perform multimodal item evaluation, market price estimation, multi-platform ad copy synthesis (e.g., Avito, Kufar, Facebook Marketplace, Telegram channels), and generates responsive Server-Side Rendered (SSR) web view previews.
+`sell_helper` is an autonomous, private, AI-augmented assistant designed to streamline the resale of used goods in the Israeli market. It operates primarily as an interactive Telegram Bot backed by a robust NestJS backend. The system leverages the Google Gemini AI engine to perform multimodal item evaluation, market price estimation in Israeli New Shekels (`ILS` / ₪) grounded in the seller's specific city in Israel, multi-platform ad copy synthesis across a multi-language matrix (Yad2 in Hebrew, Facebook Marketplace/Groups in Hebrew/Russian/English, Telegram channels in Russian/Hebrew), and generates responsive Server-Side Rendered (SSR) web view previews.
 
 Access is strictly private and restricted to authorized Telegram user IDs defined in the server environment configuration.
 
@@ -45,10 +45,10 @@ The backend is decomposed into decoupled, cohesive NestJS modules:
 | :--- | :--- | :--- |
 | **`ConfigModule`** | Environment variable loading, schema validation, whitelist parsing | `ConfigService`, `.env` validation schema |
 | **`DatabaseModule`** | Database connection pooling, SQLite persistence, migrations | `PrismaService`, Prisma Client |
-| **`TelegramModule`** | Telegraf bot lifecycle, updates handling, auth guarding, scenes | `TelegramBotService`, `TelegramAuthGuard`, `BotUpdateHandler` |
-| **`AiModule`** | Gemini AI client integration, price analysis, ad prompt generation | `GeminiAiService`, `PromptTemplateRegistry` |
-| **`AdsModule`** | CRUD operations for item sale requests, generated ad texts, photos | `AdsService`, `AdsRepository` |
-| **`WebviewModule`** | Server-side rendering (SSR via EJS) for clean ad preview pages | `WebviewController`, EJS view templates |
+| **`TelegramModule`** | Telegraf bot lifecycle, updates handling, auth guarding, scenes, city detection | `TelegramBotService`, `TelegramAuthGuard`, `TelegramUpdate` |
+| **`AiModule`** | Gemini AI client integration, Israeli market price analysis, multi-language ad synthesis (Yad2, Facebook, Telegram) | `AiService`, `PromptRegistryService` |
+| **`AdsModule`** | CRUD operations for item sale requests, generated ad texts, media | `AdsService` |
+| **`WebviewModule`** | Server-side rendering (SSR via EJS) for clean ad preview pages with language badges and RTL support | `WebviewController`, EJS view templates (`views/ad-preview.ejs`) |
 
 ---
 
@@ -132,9 +132,10 @@ erDiagram
         string userId FK "Foreign Key to User"
         string itemTitle "Title or Brief Name"
         string rawDescription "User Raw Input (Text or Transcribed Audio)"
+        string city "Seller City in Israel (Tel Aviv, Haifa, etc.)"
         float estimatedPriceMin "Estimated Min Price"
         float estimatedPriceMax "Estimated Max Price"
-        string currency "EUR, USD, BYN, RUB"
+        string currency "Default ILS (₪)"
         string status "DRAFT, ANALYZING, COMPLETED, ARCHIVED"
         datetime createdAt "Timestamp"
         datetime updatedAt "Timestamp"
@@ -152,10 +153,11 @@ erDiagram
     GeneratedAd {
         string id PK "Ad ID"
         string saleRequestId FK "Foreign Key to SaleRequest"
-        string targetPlatform "AVITO, KUFAR, FACEBOOK, TELEGRAM"
+        string targetPlatform "YAD2, FACEBOOK, TELEGRAM"
+        string language "HE (Hebrew), RU (Russian), EN (English)"
         string adTitle "Synthesized Title"
-        string adContent "Formatted Markdown/Text"
-        float recommendedPrice "Target Listed Price"
+        string adContent "Formatted Markdown/Text (RTL for HE)"
+        float recommendedPrice "Target Listed Price (ILS)"
         datetime createdAt "Timestamp"
     }
 ```

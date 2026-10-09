@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **Change Request CR-002: Israel Market Localization & Removal of Avito/Kufar**:
+  - Removed Avito (`AVITO`) and Kufar (`KUFAR`) from platforms, types, prompt registry, and UI.
+  - Added Yad2 (`YAD2`) as dedicated Israeli classified platform.
+  - Localized default currency to Israeli New Shekels (`ILS` / ₪).
+  - Added seller city grounding in Israel with automatic city detection in Russian, Hebrew, and English.
+  - Implemented multi-language ad generation matrix: Yad2 strictly in Hebrew (`HE`), Facebook in Hebrew (`HE`), Russian (`RU`), and English (`EN`), Telegram in Russian (`RU`) and Hebrew (`HE`).
+  - Added `city String?` to `SaleRequest` and `language String?` to `GeneratedAd` Prisma schema and database.
+  - Enhanced SSR Web View (`views/ad-preview.ejs`) with Yad2 styling, language badges, RTL rendering for Hebrew, and tab navigation by ad ID.
+  - Maintained 93.58% test coverage across 57 passing tests with 0 lint errors.
 - **[SH-03] Web View Generation (EJS SSR)**:
   - Configured NestJS with EJS template engine (`NestExpressApplication`, `views/` directory).
   - Implemented `WebviewModule` and `WebviewController` handling `GET /ads/:id` with 404 validation.
