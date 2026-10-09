@@ -223,7 +223,7 @@ describe('AiService', () => {
       );
       expect(generateContentMock).toHaveBeenNthCalledWith(
         2,
-        expect.objectContaining({ model: 'gemini-3.5-flash' }),
+        expect.objectContaining({ model: 'gemini-3.6-flash' }),
       );
       expect(result.itemTitle).toBe('Самокат Xiaomi Pro 2');
       expect(result.priceEstimation.recommended).toBe(900);
