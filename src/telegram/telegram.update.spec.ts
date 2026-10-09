@@ -14,7 +14,7 @@ describe('TelegramUpdate', () => {
   let adsService: AdsService;
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn((key: string): string | null => {
       if (key === 'webBaseUrl') return 'http://localhost:3000';
       return null;
     }),
@@ -418,6 +418,76 @@ describe('TelegramUpdate', () => {
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('SH-04'),
       );
+    });
+
+    it('should include clickable url button when webBaseUrl is a valid public domain', async () => {
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'webBaseUrl') return 'https://sellhelper.app';
+        return null;
+      });
+
+      const mockCtx = {
+        from: { id: 123456789 },
+        message: { text: 'Стол деревянный' },
+        sendChatAction: jest.fn().mockResolvedValue(true),
+        reply: jest.fn().mockResolvedValue(true),
+      } as any;
+
+      mockAdsService.createSaleRequest.mockResolvedValue({
+        id: 'req-public-url',
+      });
+      mockAiService.analyzeItem.mockResolvedValue(mockAnalysisResult);
+
+      await update.onText(mockCtx);
+
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          reply_markup: expect.objectContaining({
+            inline_keyboard: expect.arrayContaining([
+              expect.arrayContaining([
+                expect.objectContaining({
+                  text: '🌐 Просмотр Web-версии',
+                  url: 'https://sellhelper.app/ads/req-public-url',
+                }),
+              ]),
+            ]),
+          }),
+        }),
+      );
+
+      // Restore mock
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'webBaseUrl') return 'http://localhost:3000';
+        return null;
+      });
+    });
+
+    it('should safely recover and send plain text if keyboard markup fails', async () => {
+      const mockCtx = {
+        from: { id: 123456789 },
+        message: { text: 'Шкаф' },
+        sendChatAction: jest.fn().mockResolvedValue(true),
+        reply: jest
+          .fn()
+          .mockRejectedValueOnce(
+            new Error('400 Bad Request: inline keyboard error'),
+          )
+          .mockRejectedValueOnce(
+            new Error('400 Bad Request: inline keyboard error'),
+          )
+          .mockResolvedValueOnce(true),
+      } as any;
+
+      mockAdsService.createSaleRequest.mockResolvedValue({
+        id: 'req-recovery',
+      });
+      mockAiService.analyzeItem.mockResolvedValue(mockAnalysisResult);
+
+      await update.onText(mockCtx);
+
+      // Third reply call should be plain text without any keyboard argument
+      expect(mockCtx.reply).toHaveBeenCalledTimes(3);
     });
   });
 });

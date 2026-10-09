@@ -95,17 +95,27 @@ export class TelegramUpdate {
     const webBaseUrl =
       this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
     const webViewUrl = `${webBaseUrl}/ads/${requestId}`;
+    const isPublicWebUrl = this.isValidTelegramButtonUrl(webViewUrl);
 
     await ctx.answerCbQuery('🌐 Открытие Web-страницы...');
-    await ctx.reply(
-      `🌐 <b>Web-страница объявления готова:</b>\n\nСсылка для просмотра и быстрого копирования:\n<a href="${webViewUrl}">${webViewUrl}</a>`,
-      {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.url('🌐 Открыть в браузере', webViewUrl)],
-        ]),
-      },
-    );
+    if (isPublicWebUrl) {
+      await ctx.reply(
+        `🌐 <b>Web-страница объявления готова:</b>\n\nСсылка для просмотра и быстрого копирования:\n<a href="${webViewUrl}">${webViewUrl}</a>`,
+        {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [Markup.button.url('🌐 Открыть в браузере', webViewUrl)],
+          ]),
+        },
+      );
+    } else {
+      await ctx.reply(
+        `🌐 <b>Web-страница объявления готова:</b>\n\nЛокальный адрес для просмотра:\n<code>${webViewUrl}</code>\n\n<i>(Для отображения кликабельной кнопки в Telegram настройте публичный WEB_BASE_URL в .env)</i>`,
+        {
+          parse_mode: 'HTML',
+        },
+      );
+    }
   }
 
   @Action(/^autopublish:(.+)$/)
@@ -370,21 +380,28 @@ export class TelegramUpdate {
       }
     }
 
-    const messageText = lines.join('\n');
-
     const webBaseUrl =
       this.configService.get<string>('webBaseUrl') || 'http://localhost:3000';
     const webViewUrl = `${webBaseUrl}/ads/${saleRequestId}`;
+    const isPublicWebUrl = this.isValidTelegramButtonUrl(webViewUrl);
 
-    const inlineKeyboard = Markup.inlineKeyboard([
-      [
+    if (!isPublicWebUrl) {
+      lines.push('');
+      lines.push(`🌐 <b>Web-версия (локально):</b> <code>${webViewUrl}</code>`);
+    }
+
+    const actionButtons = [];
+    if (isPublicWebUrl) {
+      actionButtons.push(
         Markup.button.url('🌐 Просмотр Web-версии', webViewUrl),
-        Markup.button.callback(
-          '🚀 Опубликовать',
-          `autopublish:${saleRequestId}`,
-        ),
-      ],
-    ]);
+      );
+    }
+    actionButtons.push(
+      Markup.button.callback('🚀 Опубликовать', `autopublish:${saleRequestId}`),
+    );
+
+    const inlineKeyboard = Markup.inlineKeyboard([actionButtons]);
+    const messageText = lines.join('\n');
 
     try {
       await ctx.reply(messageText, {
@@ -395,10 +412,39 @@ export class TelegramUpdate {
       this.logger.warn(
         `Failed to send HTML formatted message, falling back to plain text: ${(e as Error).message}`,
       );
-      await ctx.reply(
-        lines.map((l) => l.replace(/<[^>]*>/g, '')).join('\n'),
-        inlineKeyboard,
-      );
+      try {
+        await ctx.reply(
+          lines.map((l) => l.replace(/<[^>]*>/g, '')).join('\n'),
+          inlineKeyboard,
+        );
+      } catch (innerError) {
+        this.logger.error(
+          `Failed to send message with keyboard: ${(innerError as Error).message}. Sending plain text without keyboard.`,
+        );
+        await ctx.reply(lines.map((l) => l.replace(/<[^>]*>/g, '')).join('\n'));
+      }
+    }
+  }
+
+  private isValidTelegramButtonUrl(urlStr: string): boolean {
+    try {
+      const parsed = new URL(urlStr);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return false;
+      }
+      const hostname = parsed.hostname.toLowerCase();
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        !hostname.includes('.')
+      ) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
     }
   }
 
