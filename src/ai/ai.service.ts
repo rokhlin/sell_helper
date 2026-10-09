@@ -10,6 +10,7 @@ export class AiService {
   private readonly client: GoogleGenAI | null = null;
   private readonly primaryModel = 'gemini-3.8-flash';
   private readonly fallbackModels = [
+    'gemini-3.6-flash',
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
   ];
